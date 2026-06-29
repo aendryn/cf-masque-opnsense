@@ -26,7 +26,7 @@ build_main() {
             usr/*) dst="$stage/$rel" ;;
             *)     dst="$stage/usr/local/$rel" ;;
         esac
-        install -D -m 0644 "$src" "$dst"
+        mkdir -p "$(dirname "$dst")" && install -m 0644 "$src" "$dst"
     done
     chmod 0755 "$stage/usr/local/sbin/cfzt-warp" \
                "$stage/usr/local/bin/cloudflared"
@@ -77,9 +77,10 @@ build_bootstrap() {
     stage=$(mktemp -d)
     plist=$(mktemp)
 
-    install -D -m 0644 net/repo-bootstrap/src/usr/local/etc/pkg/repos/aendryn.conf \
+    mkdir -p "$stage/usr/local/etc/pkg/repos" "$stage/usr/local/share/aendryn"
+    install -m 0644 net/repo-bootstrap/src/usr/local/etc/pkg/repos/aendryn.conf \
         "$stage/usr/local/etc/pkg/repos/aendryn.conf"
-    install -D -m 0644 net/repo-bootstrap/src/usr/local/share/aendryn/pubkey.rsa \
+    install -m 0644 net/repo-bootstrap/src/usr/local/share/aendryn/pubkey.rsa \
         "$stage/usr/local/share/aendryn/pubkey.rsa"
 
     find "$stage" -type f | sed "s|$stage/||" | sort > "$plist"

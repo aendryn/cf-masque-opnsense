@@ -121,6 +121,17 @@ func runMASQUE(ctx context.Context, cfg *models.DaemonConfig) {
 		if err := tunDev.AddDefaultRoute(gw); err != nil {
 			log.Printf("Warning: add default route: %v", err)
 		}
+		// Restore original default route when tunnel exits (runs before Close()).
+		// Without this, stopping the tunnel removes the default route and the
+		// box loses all connectivity until manually fixed.
+		if gw != "" {
+			defer func() {
+				log.Printf("Restoring default route via %s", gw)
+				if err := exec.Command("route", "change", "default", gw).Run(); err != nil {
+					_ = exec.Command("route", "add", "default", gw).Run()
+				}
+			}()
+		}
 	}
 
 	maintCfg := daemon.MaintainConfig{

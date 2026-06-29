@@ -1,0 +1,21 @@
+#!/bin/sh
+case "$2" in
+    PRE-DEINSTALL)
+        # Stop daemons gracefully via configd if available
+        /usr/local/sbin/configctl cloudflarezt stop 2>/dev/null || true
+        /usr/local/sbin/configctl cloudflarezt stopmonitor 2>/dev/null || true
+        /usr/local/sbin/configctl cloudflarezt removedns 2>/dev/null || true
+
+        # Destroy any surviving cfzt* interfaces (in case daemons didn't clean up)
+        for iface in $(ifconfig -l | tr ' ' '\n' | grep '^cfzt'); do
+            ifconfig "$iface" destroy 2>/dev/null || true
+        done
+
+        # Remove runtime state files
+        rm -f /var/run/cfzt-*.pid /var/run/cfzt-monitor.pid /var/run/cfzt-iface-*
+        ;;
+    POST-DEINSTALL)
+        # Reload Unbound so removed DNS overrides take effect
+        /usr/sbin/unbound-control reload 2>/dev/null || true
+        ;;
+esac

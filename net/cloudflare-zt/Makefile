@@ -10,8 +10,8 @@ PLUGIN_MAINTAINER=	plugins@opnsense.org
 # Bundled third-party binaries — update CLOUDFLARED_VERSION when upgrading.
 # Both are pre-built for FreeBSD amd64 and shipped inside the package so
 # no external fetches or toolchains are needed on the target OPNsense box.
-CLOUDFLARED_VERSION=	2025.1.0
-CLOUDFLARED_URL=	https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-freebsd-amd64
+CLOUDFLARED_VERSION=	2026.6.1
+CLOUDFLARED_URL=	https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-amd64.pkg
 
 CFZT_WARP_BIN=		${.CURDIR}/src/usr/local/sbin/cfzt-warp
 CLOUDFLARED_BIN=	${.CURDIR}/src/usr/local/bin/cloudflared

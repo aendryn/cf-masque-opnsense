@@ -42,12 +42,11 @@ jobs:
             -o ../../net/cloudflare-zt/src/usr/local/sbin/cfzt-warp .
           chmod 0755 ../../net/cloudflare-zt/src/usr/local/sbin/cfzt-warp
 
-      - name: Download cloudflared (FreeBSD amd64)
+      - name: Download cloudflared pkg (FreeBSD amd64)
         run: |
           VER=$(awk '/^CLOUDFLARED_VERSION/{print $2}' net/cloudflare-zt/Makefile)
-          curl -fsSL -o net/cloudflare-zt/src/usr/local/bin/cloudflared \
-            "https://github.com/cloudflare/cloudflared/releases/download/${VER}/cloudflared-freebsd-amd64"
-          chmod 0755 net/cloudflare-zt/src/usr/local/bin/cloudflared
+          curl -fsSL -o .cloudflared-dl.pkg \
+            "https://github.com/cloudflare/cloudflared/releases/download/${VER}/cloudflared-amd64.pkg"
 
       - name: Write signing key
         run: |
@@ -59,7 +58,10 @@ jobs:
         with:
           usesh: true
           prepare: pkg install -y bash
-          run: bash scripts/ci-build-pkg.sh "${{ steps.ver.outputs.VERSION }}"
+          run: |
+            pkg add .cloudflared-dl.pkg
+            cp /usr/local/bin/cloudflared net/cloudflare-zt/src/usr/local/bin/cloudflared
+            bash scripts/ci-build-pkg.sh "${{ steps.ver.outputs.VERSION }}"
 
       - name: Remove signing key
         if: always()

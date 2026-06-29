@@ -1,0 +1,7 @@
+Configures pkg to use the aendryn OPNsense plugin repository.
+
+Installing this package adds the repository source and signing key so that
+os-cloudflare-zt and future plugins can be installed or updated via the
+standard OPNsense Firmware → Plugins interface.
+
+WWW: https://github.com/aendryn/cf-masque-opnsense

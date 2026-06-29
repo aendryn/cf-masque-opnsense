@@ -1,0 +1,81 @@
+name: Build and publish
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: go/cfzt-warp/go.sum
+
+      - name: Resolve version
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build cfzt-warp (FreeBSD amd64)
+        run: |
+          cd go/cfzt-warp
+          GOOS=freebsd GOARCH=amd64 CGO_ENABLED=0 go build \
+            -ldflags="-s -w -X main.Version=${{ steps.ver.outputs.VERSION }}" \
+            -o ../../net/cloudflare-zt/src/usr/local/sbin/cfzt-warp .
+          chmod 0755 ../../net/cloudflare-zt/src/usr/local/sbin/cfzt-warp
+
+      - name: Download cloudflared (FreeBSD amd64)
+        run: |
+          VER=$(awk '/^CLOUDFLARED_VERSION/{print $2}' net/cloudflare-zt/Makefile)
+          curl -fsSL -o net/cloudflare-zt/src/usr/local/bin/cloudflared \
+            "https://github.com/cloudflare/cloudflared/releases/download/${VER}/cloudflared-freebsd-amd64"
+          chmod 0755 net/cloudflare-zt/src/usr/local/bin/cloudflared
+
+      - name: Write signing key
+        run: |
+          printf '%s' "${{ secrets.PKG_SIGNING_KEY }}" > .ci-signing.key
+          chmod 600 .ci-signing.key
+
+      - name: Build packages and repo (FreeBSD)
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          prepare: pkg install -y bash
+          run: bash scripts/ci-build-pkg.sh "${{ steps.ver.outputs.VERSION }}"
+
+      - name: Remove signing key
+        if: always()
+        run: rm -f .ci-signing.key
+
+      - name: Create GitHub release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.pkg
+
+      - name: Deploy to pkg repo (GitHub Pages)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.REPO_DEPLOY_KEY }}
+          external_repository: aendryn/opnsense-repo
+          publish_branch: gh-pages
+          publish_dir: dist/repo
+          keep_files: true

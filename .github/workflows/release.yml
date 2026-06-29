@@ -42,11 +42,24 @@ jobs:
             -o ../../net/cloudflare-zt/src/usr/local/sbin/cfzt-warp .
           chmod 0755 ../../net/cloudflare-zt/src/usr/local/sbin/cfzt-warp
 
-      - name: Download cloudflared pkg (FreeBSD amd64)
+      - name: Build cloudflared (FreeBSD amd64)
         run: |
           VER=$(awk '/^CLOUDFLARED_VERSION/{print $2}' net/cloudflare-zt/Makefile)
-          curl -fsSL -o .cloudflared-dl.pkg \
-            "https://github.com/cloudflare/cloudflared/releases/download/${VER}/cloudflared-amd64.pkg"
+          git clone --quiet --depth 1 --branch "${VER}" \
+            https://github.com/cloudflare/cloudflared /tmp/cloudflared-src
+          # Add missing FreeBSD platform stubs (cloudflared only targets darwin/linux)
+          sed 's|darwin || linux|freebsd|' \
+            /tmp/cloudflared-src/diagnostic/network/collector_unix.go \
+            > /tmp/cloudflared-src/diagnostic/network/collector_freebsd.go
+          sed 's|^//go:build linux$|//go:build freebsd|' \
+            /tmp/cloudflared-src/diagnostic/system_collector_linux.go \
+            > /tmp/cloudflared-src/diagnostic/system_collector_freebsd.go
+          cd /tmp/cloudflared-src
+          GOOS=freebsd GOARCH=amd64 CGO_ENABLED=0 go build \
+            -ldflags="-s -w" \
+            -o "${GITHUB_WORKSPACE}/net/cloudflare-zt/src/usr/local/bin/cloudflared" \
+            ./cmd/cloudflared/
+          chmod 0755 "${GITHUB_WORKSPACE}/net/cloudflare-zt/src/usr/local/bin/cloudflared"
 
       - name: Write signing key
         run: |
@@ -58,10 +71,7 @@ jobs:
         with:
           usesh: true
           prepare: pkg install -y bash
-          run: |
-            pkg add .cloudflared-dl.pkg
-            cp /usr/local/bin/cloudflared net/cloudflare-zt/src/usr/local/bin/cloudflared
-            bash scripts/ci-build-pkg.sh "${{ steps.ver.outputs.VERSION }}"
+          run: bash scripts/ci-build-pkg.sh "${{ steps.ver.outputs.VERSION }}"
 
       - name: Remove signing key
         if: always()

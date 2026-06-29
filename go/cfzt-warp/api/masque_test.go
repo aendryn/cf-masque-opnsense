@@ -157,15 +157,15 @@ func TestTLSConfig_NextProto(t *testing.T) {
 	}
 }
 
-// Verify InsecureSkipVerify is set (SNI doesn't match IP endpoint).
-func TestTLSConfig_InsecureSkipVerify(t *testing.T) {
+// TLS must use proper CA verification (InsecureSkipVerify must be false).
+func TestTLSConfig_VerifiesServerCert(t *testing.T) {
 	_, privDER, certDERb64 := generateTestKeypair(t)
 	cfg, err := TLSConfig(base64.StdEncoding.EncodeToString(privDER), certDERb64, "", "zt-masque.cloudflareclient.com")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !cfg.InsecureSkipVerify {
-		t.Error("InsecureSkipVerify should be true (SNI != endpoint IP)")
+	if cfg.InsecureSkipVerify {
+		t.Error("InsecureSkipVerify must be false; server cert is verified via system CAs + ServerName")
 	}
 }
 

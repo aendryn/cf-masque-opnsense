@@ -5,8 +5,10 @@ Called by configd actions for register/enroll/rotatekey commands.
 """
 
 import base64
+import fcntl
 import json
 import os
+import re
 import sys
 import datetime
 import xml.etree.ElementTree as ET
@@ -22,26 +24,36 @@ CONFIG_FILE = '/conf/config.xml'
 RUNTIME_DIR = '/usr/local/etc/cloudflarezt'
 
 
+_UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+
+
 def _update_config_xml(conn_uuid: str, updates: dict) -> None:
     """Write updated fields for a connection back into config.xml."""
-    tree = ET.parse(CONFIG_FILE)
-    root = tree.getroot()
-    zt = root.find('.//CloudflareZT/connections')
-    if zt is None:
-        raise RuntimeError('CloudflareZT/connections not found in config.xml')
-    conn = zt.find(f"connection[@uuid='{conn_uuid}']")
-    if conn is None:
-        raise RuntimeError(f'Connection {conn_uuid} not found in config.xml')
+    if not _UUID_RE.match(conn_uuid):
+        raise ValueError(f'Invalid connection UUID: {conn_uuid!r}')
 
-    for key, val in updates.items():
-        el = conn.find(key)
-        if el is None:
-            el = ET.SubElement(conn, key)
-        el.text = str(val)
+    # Exclusive lock around read-modify-write to avoid racing concurrent GUI saves.
+    with open(CONFIG_FILE) as lock_fd:
+        fcntl.flock(lock_fd, fcntl.LOCK_EX)
+        tree = ET.parse(CONFIG_FILE)
+        root = tree.getroot()
+        zt = root.find('.//CloudflareZT/connections')
+        if zt is None:
+            raise RuntimeError('CloudflareZT/connections not found in config.xml')
+        conn = zt.find(f"connection[@uuid='{conn_uuid}']")
+        if conn is None:
+            raise RuntimeError(f'Connection {conn_uuid} not found in config.xml')
 
-    tmp = CONFIG_FILE + '.cloudflarezt.tmp'
-    tree.write(tmp, encoding='utf-8', xml_declaration=True)
-    os.replace(tmp, CONFIG_FILE)
+        for key, val in updates.items():
+            el = conn.find(key)
+            if el is None:
+                el = ET.SubElement(conn, key)
+            el.text = str(val)
+
+        tmp = CONFIG_FILE + '.cloudflarezt.tmp'
+        tree.write(tmp, encoding='utf-8', xml_declaration=True)
+        os.replace(tmp, CONFIG_FILE)
+        fcntl.flock(lock_fd, fcntl.LOCK_UN)
 
 
 def cmd_register(conn_uuid: str, jwt: str = '') -> dict:

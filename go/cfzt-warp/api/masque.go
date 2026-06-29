@@ -48,10 +48,9 @@ func TLSConfig(privKeyDERb64, certDERb64, endpointPubkeyPEM, sni string) (*tls.C
 	}
 
 	cfg := &tls.Config{
-		Certificates:       []tls.Certificate{tlsCert},
-		ServerName:         sni,
-		NextProtos:         []string{http3.NextProtoH3},
-		InsecureSkipVerify: true, // SNI doesn't match endpoint IP; we pin pubkey below
+		Certificates: []tls.Certificate{tlsCert},
+		ServerName:   sni,
+		NextProtos:   []string{http3.NextProtoH3},
 	}
 
 	if endpointPubkeyPEM != "" {

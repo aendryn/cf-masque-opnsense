@@ -30,12 +30,13 @@ def _build_unbound_conf(dns_cfg: dict) -> str:
     if servers:
         lines += ['forward-zone:', '    name: "."']
         for addr in servers:
+            addr = addr.replace('\n', '').replace('\r', '')
             lines.append(f'    forward-addr: {addr}')
 
     if dns_cfg.get('search_domains'):
         lines.append('server:')
         for domain in dns_cfg['search_domains'].split(','):
-            domain = domain.strip()
+            domain = domain.strip().replace('\n', '').replace('\r', '')
             if domain:
                 lines.append(f'    domain-insecure: "{domain}"')
 

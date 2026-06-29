@@ -19,9 +19,11 @@ If upgrading from an early development build where secrets were stored different
 
 Schema version is tracked in `CloudflareZT.xml`. When upgrading between minor versions that add new fields, OPNsense's model migration system applies defaults automatically. No manual config editing is required.
 
-## Go Daemon Binary
+## Bundled Binaries
 
-The cfzt-warp binary is replaced atomically during package upgrade. Running connections are restarted after the upgrade to load the new binary. If a connection is in active use, expect a brief reconnect (handled by the client's reconnect logic on the other end).
+Both `cfzt-warp` and `cloudflared` are shipped inside the package — no separate downloads required. They are replaced atomically during package upgrade. Running connections are restarted after the upgrade to load the new binaries.
+
+To upgrade `cloudflared` to a newer release, update `CLOUDFLARED_VERSION` in `net/cloudflare-zt/Makefile`, run `make build-daemon`, and rebuild the package.
 
 ## Checking Current Version
 

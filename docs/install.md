@@ -4,8 +4,11 @@
 
 - OPNsense 24.1 or later (FreeBSD 14+)
 - Cloudflare Zero Trust account
-- For WARP mode: `wireguard-tools` package
-- For cloudflared mode: `cloudflared` package (community FreeBSD build)
+
+No additional packages are required. The plugin ships as a self-contained package:
+- `cfzt-warp` (MASQUE/WireGuard tunnel daemon) — bundled at `/usr/local/sbin/cfzt-warp`
+- `cloudflared` (Cloudflare Tunnel connector) — bundled at `/usr/local/bin/cloudflared`
+- `wireguard-tools` — listed as a package dependency, installed automatically
 
 ## Install the Plugin
 
@@ -14,8 +17,6 @@ pkg install os-cloudflare-zt
 ```
 
 Or via the OPNsense GUI: **System → Firmware → Plugins**, search for `os-cloudflare-zt`, click Install.
-
-After installation, the cfzt-warp daemon binary is installed to `/usr/local/sbin/cfzt-warp`.
 
 ## First-Time Setup
 

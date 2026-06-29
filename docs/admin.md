@@ -31,7 +31,7 @@ Secrets (device tokens, private keys, TLS certificates) are stored AES-256-GCM e
 
 **Split tunnel** (default): only traffic in the include list routes through Cloudflare. LAN traffic and non-ZT traffic use the normal default gateway.
 
-**Full tunnel**: all traffic routes through Cloudflare. The plugin adds host routes for Cloudflare endpoints via the normal gateway first, then sets the TUN as the default route.
+**Full tunnel**: all traffic routes through Cloudflare. The plugin adds host routes for Cloudflare endpoints via the normal gateway first, then sets the TUN as the default route. When the tunnel stops, the original default gateway is restored automatically — the router retains connectivity.
 
 Configure at **VPN → Cloudflare Zero Trust → Split Tunnel**.
 

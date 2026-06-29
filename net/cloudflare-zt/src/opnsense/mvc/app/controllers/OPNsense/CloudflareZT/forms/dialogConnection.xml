@@ -1,0 +1,89 @@
+<form>
+    <field>
+        <id>connection.enabled</id>
+        <label>Enabled</label>
+        <type>checkbox</type>
+    </field>
+    <field>
+        <id>connection.name</id>
+        <label>Name</label>
+        <type>text</type>
+        <help>Unique connection name (alphanumeric and hyphens only)</help>
+    </field>
+    <field>
+        <id>connection.description</id>
+        <label>Description</label>
+        <type>text</type>
+    </field>
+    <field>
+        <id>connection.organization_ref</id>
+        <label>Organization</label>
+        <type>select_multiple</type>
+        <source>/api/cloudflarezt/organization/search</source>
+        <help>Cloudflare organization this connection belongs to</help>
+    </field>
+    <field>
+        <id>connection.protocol</id>
+        <label>Protocol</label>
+        <type>dropdown</type>
+        <help>Transport protocol for this connection</help>
+    </field>
+    <field>
+        <id>connection.tunnel_mode</id>
+        <label>Tunnel Mode</label>
+        <type>dropdown</type>
+    </field>
+    <field>
+        <id>connection.use_ipv6</id>
+        <label>Use IPv6</label>
+        <type>checkbox</type>
+        <help>Use IPv6 endpoint when available</help>
+    </field>
+    <field>
+        <id>connection.mtu</id>
+        <label>MTU</label>
+        <type>text</type>
+        <help>Interface MTU (default: 1280)</help>
+    </field>
+    <field>
+        <id>connection.bind_interface</id>
+        <label>Bind to Interface</label>
+        <type>text</type>
+        <help>WAN interface to bind outbound WARP traffic (leave empty for default)</help>
+    </field>
+    <field>
+        <id>connection.reconnect_delay</id>
+        <label>Reconnect Delay (s)</label>
+        <type>text</type>
+        <help>Initial delay in seconds before reconnect attempt</help>
+    </field>
+    <field>
+        <id>connection.always_reconnect</id>
+        <label>Always Reconnect</label>
+        <type>checkbox</type>
+        <help>Maintain connection even when idle</help>
+    </field>
+    <field>
+        <id>connection.http2_fallback</id>
+        <label>HTTP/2 Fallback</label>
+        <type>checkbox</type>
+        <help>Fall back to HTTP/2 if QUIC/HTTP3 is unavailable</help>
+    </field>
+    <field>
+        <id>connection.auto_rotate_keys</id>
+        <label>Auto-rotate Keys</label>
+        <type>checkbox</type>
+        <help>Automatically rotate MASQUE keys on schedule</help>
+    </field>
+    <field>
+        <id>connection.key_rotation_days</id>
+        <label>Key Rotation Interval (days)</label>
+        <type>text</type>
+    </field>
+    <field>
+        <id>connection.device_name</id>
+        <label>Device Name</label>
+        <type>text</type>
+        <help>Display name for this device in Cloudflare dashboard</help>
+    </field>
+</form>

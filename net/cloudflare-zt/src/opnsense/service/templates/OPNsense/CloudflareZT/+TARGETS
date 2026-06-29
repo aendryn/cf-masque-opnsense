@@ -1,0 +1,8 @@
++TARGETS
+
+# Template targets for Cloudflare Zero Trust plugin.
+# These are regenerated on `cloudflarezt restart` or `template reload OPNsense/CloudflareZT`.
+
+# No file-based templates needed — cfzt-warp reads directly from secrets store
+# and service.py generates connection JSON configs at runtime.
+# This file exists to register the template namespace with configd.

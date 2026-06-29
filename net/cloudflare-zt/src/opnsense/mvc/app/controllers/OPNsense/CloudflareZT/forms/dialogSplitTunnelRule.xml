@@ -1,0 +1,35 @@
+<form>
+    <field>
+        <id>rule.enabled</id>
+        <label>Enabled</label>
+        <type>checkbox</type>
+    </field>
+    <field>
+        <id>rule.connection_ref</id>
+        <label>Connection</label>
+        <type>select_multiple</type>
+        <source>/api/cloudflarezt/connection/search</source>
+        <help>Connection this rule applies to</help>
+    </field>
+    <field>
+        <id>rule.action</id>
+        <label>Action</label>
+        <type>dropdown</type>
+    </field>
+    <field>
+        <id>rule.type</id>
+        <label>Type</label>
+        <type>dropdown</type>
+    </field>
+    <field>
+        <id>rule.value</id>
+        <label>Value</label>
+        <type>text</type>
+        <help>CIDR prefix (e.g. 192.168.0.0/16) or domain name (e.g. example.com)</help>
+    </field>
+    <field>
+        <id>rule.description</id>
+        <label>Description</label>
+        <type>text</type>
+    </field>
+</form>

@@ -1,0 +1,251 @@
+<model>
+    <mount>//OPNsense/CloudflareZT</mount>
+    <description>Cloudflare Zero Trust VPN configuration</description>
+    <version>1.0.0</version>
+    <items>
+
+        <!-- Global settings -->
+        <general>
+            <enabled type="BooleanField">
+                <Default>0</Default>
+                <Required>Y</Required>
+            </enabled>
+        </general>
+
+        <!-- Organizations: multiple Cloudflare accounts -->
+        <organizations>
+            <organization type="ArrayField">
+                <enabled type="BooleanField">
+                    <Default>1</Default>
+                    <Required>Y</Required>
+                </enabled>
+                <name type="TextField">
+                    <Required>Y</Required>
+                    <ValidationMessage>Organization name is required</ValidationMessage>
+                    <Mask>/^[\w\s\-\.]{1,64}$/</Mask>
+                </name>
+                <description type="TextField"/>
+                <account_id type="TextField">
+                    <Required>Y</Required>
+                    <ValidationMessage>Cloudflare Account ID is required</ValidationMessage>
+                    <Mask>/^[a-f0-9]{32}$/</Mask>
+                </account_id>
+                <team_name type="TextField">
+                    <Mask>/^[\w\-]{0,63}$/</Mask>
+                </team_name>
+                <!-- api_token_ref: key into secrets store, NOT the token itself -->
+                <api_token_ref type="TextField"/>
+            </organization>
+        </organizations>
+
+        <!-- Connections (one per WARP registration or cloudflared tunnel) -->
+        <connections>
+            <connection type="ArrayField">
+                <enabled type="BooleanField">
+                    <Default>1</Default>
+                    <Required>Y</Required>
+                </enabled>
+                <name type="TextField">
+                    <Required>Y</Required>
+                    <ValidationMessage>Connection name is required</ValidationMessage>
+                    <Mask>/^[\w\-]{1,32}$/</Mask>
+                </name>
+                <description type="TextField"/>
+                <organization_ref type="TextField"/>
+                <protocol type="OptionField">
+                    <Default>warp_masque</Default>
+                    <Required>Y</Required>
+                    <OptionValues>
+                        <warp_masque>WARP — MASQUE/HTTP3 (recommended)</warp_masque>
+                        <warp_wireguard>WARP — WireGuard</warp_wireguard>
+                        <cloudflared>Cloudflare Tunnel (cloudflared)</cloudflared>
+                    </OptionValues>
+                </protocol>
+
+                <!-- WARP registration fields (set after device registration) -->
+                <device_id type="TextField">
+                    <Mask>/^[a-f0-9\-]{0,64}$/</Mask>
+                </device_id>
+                <!-- device_token_ref: key into secrets store -->
+                <device_token_ref type="TextField"/>
+                <device_name type="TextField">
+                    <Mask>/^[\w\-\s]{0,64}$/</Mask>
+                </device_name>
+
+                <!-- Assigned addresses from WARP registration response -->
+                <client_ipv4 type="NetworkField">
+                    <NetMaskAllowed>Y</NetMaskAllowed>
+                </client_ipv4>
+                <client_ipv6 type="NetworkField">
+                    <NetMaskAllowed>Y</NetMaskAllowed>
+                </client_ipv6>
+
+                <!-- Cloudflare endpoint details (from registration response) -->
+                <endpoint_v4 type="TextField">
+                    <Mask>/^[\d\.\:]{0,45}$/</Mask>
+                </endpoint_v4>
+                <endpoint_v6 type="TextField">
+                    <Mask>/^[\d\.\:a-f\[\]]{0,50}$/</Mask>
+                </endpoint_v6>
+                <!-- endpoint_pubkey_ref: key into secrets store -->
+                <endpoint_pubkey_ref type="TextField"/>
+
+                <!-- MASQUE private key ref: key into secrets store -->
+                <masque_privkey_ref type="TextField"/>
+
+                <!-- WireGuard fields -->
+                <wg_privkey_ref type="TextField"/>
+                <wg_pubkey type="TextField">
+                    <Mask>/^[A-Za-z0-9\+\/=]{43,44}$/</Mask>
+                </wg_pubkey>
+                <wg_peer_pubkey type="TextField">
+                    <Mask>/^[A-Za-z0-9\+\/=]{43,44}$/</Mask>
+                </wg_peer_pubkey>
+                <wg_peer_port type="IntegerField">
+                    <Default>2408</Default>
+                    <MinimumValue>1</MinimumValue>
+                    <MaximumValue>65535</MaximumValue>
+                </wg_peer_port>
+
+                <!-- Cloudflare Tunnel fields -->
+                <tunnel_id type="TextField">
+                    <Mask>/^[a-f0-9\-]{0,64}$/</Mask>
+                </tunnel_id>
+                <!-- tunnel_token_ref: key into secrets store -->
+                <tunnel_token_ref type="TextField"/>
+
+                <!-- Traffic mode -->
+                <tunnel_mode type="OptionField">
+                    <Default>split</Default>
+                    <Required>Y</Required>
+                    <OptionValues>
+                        <split>Split Tunnel</split>
+                        <full>Full Tunnel</full>
+                    </OptionValues>
+                </tunnel_mode>
+
+                <!-- Network settings -->
+                <use_ipv6 type="BooleanField">
+                    <Default>0</Default>
+                </use_ipv6>
+                <prefer_ipv6 type="BooleanField">
+                    <Default>0</Default>
+                </prefer_ipv6>
+                <mtu type="IntegerField">
+                    <Default>1280</Default>
+                    <MinimumValue>576</MinimumValue>
+                    <MaximumValue>9000</MaximumValue>
+                </mtu>
+                <bind_interface type="TextField">
+                    <Mask>/^[\w]{0,16}$/</Mask>
+                </bind_interface>
+
+                <!-- Connection resilience -->
+                <reconnect_delay type="IntegerField">
+                    <Default>5</Default>
+                    <MinimumValue>1</MinimumValue>
+                    <MaximumValue>300</MaximumValue>
+                </reconnect_delay>
+                <always_reconnect type="BooleanField">
+                    <Default>1</Default>
+                </always_reconnect>
+                <http2_fallback type="BooleanField">
+                    <Default>1</Default>
+                </http2_fallback>
+
+                <!-- Key management -->
+                <auto_rotate_keys type="BooleanField">
+                    <Default>1</Default>
+                </auto_rotate_keys>
+                <key_rotation_days type="IntegerField">
+                    <Default>30</Default>
+                    <MinimumValue>1</MinimumValue>
+                    <MaximumValue>365</MaximumValue>
+                </key_rotation_days>
+                <last_key_rotation type="TextField"/>
+
+                <!-- Registration status -->
+                <registration_status type="OptionField">
+                    <Default>unregistered</Default>
+                    <OptionValues>
+                        <unregistered>Not registered</unregistered>
+                        <registered>Registered (WireGuard key)</registered>
+                        <enrolled>Enrolled (MASQUE key)</enrolled>
+                        <error>Error</error>
+                    </OptionValues>
+                </registration_status>
+            </connection>
+        </connections>
+
+        <!-- Split tunnel rules (per connection) -->
+        <split_tunnel_rules>
+            <rule type="ArrayField">
+                <enabled type="BooleanField">
+                    <Default>1</Default>
+                </enabled>
+                <connection_ref type="TextField">
+                    <Required>Y</Required>
+                </connection_ref>
+                <action type="OptionField">
+                    <Default>exclude</Default>
+                    <Required>Y</Required>
+                    <OptionValues>
+                        <exclude>Exclude from tunnel (bypass)</exclude>
+                        <include>Force through tunnel</include>
+                    </OptionValues>
+                </action>
+                <type type="OptionField">
+                    <Default>cidr</Default>
+                    <Required>Y</Required>
+                    <OptionValues>
+                        <cidr>CIDR prefix</cidr>
+                        <domain>Domain name</domain>
+                    </OptionValues>
+                </type>
+                <value type="TextField">
+                    <Required>Y</Required>
+                </value>
+                <description type="TextField"/>
+            </rule>
+        </split_tunnel_rules>
+
+        <!-- DNS overrides -->
+        <dns>
+            <override_dns type="BooleanField">
+                <Default>0</Default>
+            </override_dns>
+            <gateway_dns type="BooleanField">
+                <Default>0</Default>
+            </gateway_dns>
+            <custom_servers type="TextField"/>
+            <search_domains type="TextField"/>
+        </dns>
+
+        <!-- Monitoring settings -->
+        <monitoring>
+            <enabled type="BooleanField">
+                <Default>1</Default>
+            </enabled>
+            <health_check_interval type="IntegerField">
+                <Default>30</Default>
+                <MinimumValue>5</MinimumValue>
+                <MaximumValue>3600</MaximumValue>
+            </health_check_interval>
+            <notify_on_failure type="BooleanField">
+                <Default>1</Default>
+            </notify_on_failure>
+            <notify_on_recovery type="BooleanField">
+                <Default>1</Default>
+            </notify_on_recovery>
+            <log_level type="OptionField">
+                <Default>info</Default>
+                <OptionValues>
+                    <error>Error only</error>
+                    <info>Informational</info>
+                    <debug>Debug</debug>
+                </OptionValues>
+            </log_level>
+        </monitoring>
+
+    </items>
+</model>

@@ -1,0 +1,22 @@
+<acl>
+    <page-vpn-cloudflarezt>
+        <patterns>
+            <pattern>ui/cloudflarezt*</pattern>
+            <pattern>api/cloudflarezt/*</pattern>
+        </patterns>
+        <description>Cloudflare Zero Trust VPN</description>
+    </page-vpn-cloudflarezt>
+    <page-vpn-cloudflarezt-admin>
+        <patterns>
+            <pattern>api/cloudflarezt/connection/set*</pattern>
+            <pattern>api/cloudflarezt/connection/add*</pattern>
+            <pattern>api/cloudflarezt/connection/del*</pattern>
+            <pattern>api/cloudflarezt/organization/set*</pattern>
+            <pattern>api/cloudflarezt/organization/add*</pattern>
+            <pattern>api/cloudflarezt/organization/del*</pattern>
+            <pattern>api/cloudflarezt/service/*</pattern>
+            <pattern>api/cloudflarezt/key/*</pattern>
+        </patterns>
+        <description>Cloudflare Zero Trust VPN — Administration</description>
+    </page-vpn-cloudflarezt-admin>
+</acl>

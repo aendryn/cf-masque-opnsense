@@ -1,0 +1,13 @@
+<menu>
+    <VPN>
+        <CloudflareZT order="250" VisibleName="Cloudflare ZT" cssClass="fa fa-cloud fa-fw">
+            <Dashboard order="10" VisibleName="Dashboard" url="/ui/cloudflarezt"/>
+            <Connections order="20" VisibleName="Connections" url="/ui/cloudflarezt/connections"/>
+            <Organizations order="30" VisibleName="Organizations" url="/ui/cloudflarezt/organizations"/>
+            <SplitTunnel order="40" VisibleName="Split Tunnel" url="/ui/cloudflarezt/splittunnel"/>
+            <Wizard order="50" VisibleName="Setup Wizard" url="/ui/cloudflarezt/wizard"/>
+            <Diagnostics order="60" VisibleName="Diagnostics" url="/ui/cloudflarezt/diagnostics"/>
+            <Logs order="70" VisibleName="Log" url="/ui/cloudflarezt/logs"/>
+        </CloudflareZT>
+    </VPN>
+</menu>

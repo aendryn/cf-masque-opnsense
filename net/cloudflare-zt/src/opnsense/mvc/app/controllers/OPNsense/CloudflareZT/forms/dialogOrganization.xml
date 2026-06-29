@@ -1,0 +1,36 @@
+<form>
+    <field>
+        <id>organization.enabled</id>
+        <label>Enabled</label>
+        <type>checkbox</type>
+    </field>
+    <field>
+        <id>organization.name</id>
+        <label>Name</label>
+        <type>text</type>
+        <help>Display name for this organization</help>
+    </field>
+    <field>
+        <id>organization.description</id>
+        <label>Description</label>
+        <type>text</type>
+    </field>
+    <field>
+        <id>organization.account_id</id>
+        <label>Account ID</label>
+        <type>text</type>
+        <help>Cloudflare Account ID (32 hex characters, found in Cloudflare dashboard)</help>
+    </field>
+    <field>
+        <id>organization.team_name</id>
+        <label>Team Name</label>
+        <type>text</type>
+        <help>Cloudflare Zero Trust team name (e.g. mycompany for mycompany.cloudflareaccess.com)</help>
+    </field>
+    <field>
+        <id>organization.api_token</id>
+        <label>API Token</label>
+        <type>password</type>
+        <help>Cloudflare API token with Zero Trust permissions. Stored encrypted, not visible after save.</help>
+    </field>
+</form>

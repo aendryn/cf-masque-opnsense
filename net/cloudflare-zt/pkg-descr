@@ -1,0 +1,16 @@
+Cloudflare Zero Trust VPN plugin for OPNsense.
+
+Integrates Cloudflare Zero Trust networking as a first-class VPN component,
+supporting WARP (MASQUE/HTTP3 and WireGuard modes) and Cloudflare Tunnel.
+
+Features:
+- WARP via MASQUE/QUIC (Connect-IP protocol, RFC 9484)
+- WARP via WireGuard (kernel WireGuard)
+- Cloudflare Tunnel (cloudflared)
+- Multiple organizations and tunnels
+- Split and full tunnel modes
+- Automatic key rotation
+- Health monitoring and diagnostics
+- Native OPNsense GUI integration
+
+WWW: https://www.cloudflare.com/zero-trust/

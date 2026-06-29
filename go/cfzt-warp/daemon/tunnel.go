@@ -48,6 +48,11 @@ func MaintainTunnel(ctx context.Context, cfg MaintainConfig) {
 		log.Fatalf("TLS config: %v", err)
 	}
 
+	logID := cfg.ConnUUID
+	if len(logID) > 8 {
+		logID = logID[:8]
+	}
+
 	bufPool := newBufPool(cfg.MTU + internal.DatagramContextIDHeadroom)
 	delay := cfg.ReconnectDelay
 
@@ -62,28 +67,28 @@ func MaintainTunnel(ctx context.Context, cfg MaintainConfig) {
 			n, err := cfg.Device.Read(buf[internal.DatagramContextIDHeadroom:])
 			bufPool.put(buf)
 			if err != nil {
-				log.Printf("[%s] TUN read while idle: %v", cfg.ConnUUID[:8], err)
+				log.Printf("[%s] TUN read while idle: %v", logID, err)
 				if sleepCtx(ctx, delay) != nil {
 					return
 				}
 				continue
 			}
-			log.Printf("[%s] Outbound activity (%d bytes), connecting...", cfg.ConnUUID[:8], n)
+			log.Printf("[%s] Outbound activity (%d bytes), connecting...", logID, n)
 		}
 
 		endpoint, err := cfg.selectEndpoint()
 		if err != nil {
-			log.Printf("[%s] Endpoint selection failed: %v", cfg.ConnUUID[:8], err)
+			log.Printf("[%s] Endpoint selection failed: %v", logID, err)
 			if sleepCtx(ctx, delay) != nil {
 				return
 			}
 			continue
 		}
 
-		log.Printf("[%s] Connecting to MASQUE endpoint %s (H2=%v)", cfg.ConnUUID[:8], endpoint, cfg.UseH2)
+		log.Printf("[%s] Connecting to MASQUE endpoint %s (H2=%v)", logID, endpoint, cfg.UseH2)
 		result, rsp, err := api.ConnectMASQUE(ctx, tlsCfg, endpoint, cfg.UseH2)
 		if err != nil {
-			log.Printf("[%s] MASQUE connect failed: %v", cfg.ConnUUID[:8], err)
+			log.Printf("[%s] MASQUE connect failed: %v", logID, err)
 			delay = backoff(delay, cfg.ReconnectDelay, 60*time.Second)
 			if sleepCtx(ctx, delay) != nil {
 				return
@@ -91,7 +96,7 @@ func MaintainTunnel(ctx context.Context, cfg MaintainConfig) {
 			continue
 		}
 		if rsp.StatusCode != 200 {
-			log.Printf("[%s] MASQUE connect HTTP %s", cfg.ConnUUID[:8], rsp.Status)
+			log.Printf("[%s] MASQUE connect HTTP %s", logID, rsp.Status)
 			_ = result.IPConn.Close()
 			closeResult(result)
 			delay = backoff(delay, cfg.ReconnectDelay, 60*time.Second)
@@ -101,7 +106,7 @@ func MaintainTunnel(ctx context.Context, cfg MaintainConfig) {
 			continue
 		}
 
-		log.Printf("[%s] MASQUE tunnel connected", cfg.ConnUUID[:8])
+		log.Printf("[%s] MASQUE tunnel connected", logID)
 		delay = cfg.ReconnectDelay // reset on success
 
 		errCh := make(chan error, 2)
@@ -137,12 +142,12 @@ func MaintainTunnel(ctx context.Context, cfg MaintainConfig) {
 						errCh <- fmt.Errorf("MASQUE write closed: %w", err)
 						return
 					}
-					log.Printf("[%s] MASQUE write: %v", cfg.ConnUUID[:8], err)
+					log.Printf("[%s] MASQUE write: %v", logID, err)
 					continue
 				}
 				if len(icmp) > 0 {
 					if err := cfg.Device.Write(icmp); err != nil {
-						log.Printf("[%s] TUN write ICMP: %v", cfg.ConnUUID[:8], err)
+						log.Printf("[%s] TUN write ICMP: %v", logID, err)
 					}
 				}
 			}
@@ -158,7 +163,7 @@ func MaintainTunnel(ctx context.Context, cfg MaintainConfig) {
 						errCh <- fmt.Errorf("MASQUE read closed: %w", err)
 						return
 					}
-					log.Printf("[%s] MASQUE read: %v", cfg.ConnUUID[:8], err)
+					log.Printf("[%s] MASQUE read: %v", logID, err)
 					if cfg.UseH2 {
 						errCh <- err
 						return
@@ -173,7 +178,7 @@ func MaintainTunnel(ctx context.Context, cfg MaintainConfig) {
 		}()
 
 		pumpErr := <-errCh
-		log.Printf("[%s] Tunnel lost: %v — reconnecting in %s", cfg.ConnUUID[:8], pumpErr, delay)
+		log.Printf("[%s] Tunnel lost: %v — reconnecting in %s", logID, pumpErr, delay)
 
 		cancelPumps()
 		_ = result.IPConn.Close()
@@ -183,7 +188,7 @@ func MaintainTunnel(ctx context.Context, cfg MaintainConfig) {
 		select {
 		case <-done:
 		case <-time.After(pumpShutdownGrace):
-			log.Printf("[%s] Pump shutdown grace expired", cfg.ConnUUID[:8])
+			log.Printf("[%s] Pump shutdown grace expired", logID)
 		}
 		closeResult(result)
 

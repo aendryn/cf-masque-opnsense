@@ -81,9 +81,12 @@ class ConnectionController extends ApiMutableModelControllerBase
         }
 
         $jwt = $this->request->getPost('jwt', 'string', '');
+        if (!empty($jwt) && !preg_match('/^[A-Za-z0-9._-]+$/', $jwt)) {
+            return ['result' => 'failed', 'message' => 'Invalid JWT format'];
+        }
 
         $backend = new Backend();
-        $rawResult = trim($backend->configdRun("cloudflarezt register {$uuid}"));
+        $rawResult = trim($backend->configdRun("cloudflarezt register {$uuid} {$jwt}"));
 
         $result = json_decode($rawResult, true);
         if ($result === null) {

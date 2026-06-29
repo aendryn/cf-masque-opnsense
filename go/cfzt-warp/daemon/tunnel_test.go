@@ -3,7 +3,6 @@ package daemon
 import (
 	"context"
 	"errors"
-	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -168,32 +167,7 @@ func TestMaintainConfig_SelectEndpoint_InvalidIP(t *testing.T) {
 	}
 }
 
-// MaintainTunnel integration: cancellation stops the loop without deadlock.
-func TestMaintainTunnel_CancelsCleanly(t *testing.T) {
-	dev := newMockDevice()
-	var connectCalls atomic.Int32
-
-	// We can't easily mock ConnectMASQUE without an interface, but we can verify
-	// the loop exits on ctx cancel even before connecting (AlwaysReconnect=false,
-	// device read blocks → cancel should unblock).
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
-	defer cancel()
-
-	// Make device.Read block until context is done
-	dev.readErr = nil
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		// The loop will try to read from TUN (AlwaysReconnect=false).
-		// Since readCh is empty and ctx will expire, it should exit.
-		// We can't call MaintainTunnel here without real TLS creds, so just
-		// verify our helpers work correctly.
-		_ = connectCalls.Load()
-	}()
-	<-ctx.Done()
-	<-done // must not deadlock
-
-	if ctx.Err() == nil {
-		t.Error("context should be done")
-	}
-}
+// MaintainTunnel cancellation can only be tested end-to-end against a live
+// MASQUE server (ConnectMASQUE is not injectable). The helper tests above
+// cover backoff, endpoint selection, and sleepCtx — the pieces that compose
+// the reconnect loop. Integration coverage lives in tests/integration/.

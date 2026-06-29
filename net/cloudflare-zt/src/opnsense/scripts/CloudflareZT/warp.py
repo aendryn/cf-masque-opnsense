@@ -100,7 +100,7 @@ def cmd_register(conn_uuid: str, jwt: str = '') -> dict:
         iface = updated.get('config', {}).get('interface', {}).get('addresses', {})
         peers = updated.get('config', {}).get('peers', [])
         peer = peers[0] if peers else {}
-        endpoint_v4 = peer.get('endpoint', {}).get('v4', '').rstrip(':0')
+        endpoint_v4 = peer.get('endpoint', {}).get('v4', '').rsplit(':', 1)[0]
         endpoint_v6_raw = peer.get('endpoint', {}).get('v6', '')
         # Strip brackets and port: [2606:...]:0 -> 2606:...
         endpoint_v6 = endpoint_v6_raw.lstrip('[').split(']:')[0] if endpoint_v6_raw else ''
@@ -251,7 +251,8 @@ def cmd_rotatekeyscheck() -> dict:
         result = cmd_rotatekey(item['uuid'])
         results.append({'uuid': item['uuid'], 'name': item['name'], 'result': result})
 
-    return {'checked': len(cfg['connections']), 'rotated': len(due), 'results': results}
+    rotated = sum(1 for r in results if isinstance(r['result'], dict) and r['result'].get('result') == 'ok')
+    return {'checked': len(cfg['connections']), 'rotated': rotated, 'results': results}
 
 
 if __name__ == '__main__':

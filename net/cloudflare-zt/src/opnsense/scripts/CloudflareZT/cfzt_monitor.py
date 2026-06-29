@@ -119,7 +119,7 @@ def run_monitor() -> None:
                 time.sleep(30)
                 continue
 
-            interval = cfg.get('monitoring', {}).get('health_check_interval', 30)
+            interval = max(5, cfg.get('monitoring', {}).get('health_check_interval', 30))
             notify_fail = cfg.get('monitoring', {}).get('notify_on_failure', True)
             notify_recv = cfg.get('monitoring', {}).get('notify_on_recovery', True)
 

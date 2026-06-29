@@ -156,8 +156,10 @@ def start_connection(conn_uuid: str, conn: dict) -> dict:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        # Give daemon a moment to write its PID file
+        # Give daemon a moment to write its PID file, then confirm it's still alive.
         time.sleep(0.5)
+        if proc.poll() is not None:
+            return {'result': 'failed', 'message': f'daemon exited immediately (code {proc.returncode}); check logs'}
         return {'result': 'ok', 'pid': proc.pid}
 
     elif proto == 'cloudflared':
@@ -170,6 +172,8 @@ def start_connection(conn_uuid: str, conn: dict) -> dict:
             stderr=subprocess.DEVNULL,
         )
         time.sleep(0.5)
+        if proc.poll() is not None:
+            return {'result': 'failed', 'message': f'cloudflared exited immediately (code {proc.returncode}); check logs'}
         return {'result': 'ok', 'pid': proc.pid}
 
     return {'result': 'failed', 'message': f'Unknown protocol: {proto}'}
@@ -198,6 +202,10 @@ def stop_connection(conn_uuid: str, conn: dict) -> dict:
         os.unlink(pid_file)
     except FileNotFoundError:
         pass
+
+    # No-op if SIGTERM succeeded (daemon cleaned up its own interface).
+    # Destroys the orphaned interface if SIGKILL was needed.
+    _cleanup_stale_iface(conn_uuid)
 
     return {'result': 'ok'}
 

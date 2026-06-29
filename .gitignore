@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+# Pre-built binaries (produced by 'make build-daemon', not committed to source)
+net/cloudflare-zt/src/usr/local/sbin/cfzt-warp
+net/cloudflare-zt/src/usr/local/bin/cloudflared

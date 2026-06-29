@@ -13,4 +13,9 @@ Features:
 - Health monitoring and diagnostics
 - Native OPNsense GUI integration
 
+Bundled binaries (FreeBSD amd64, no external downloads required at install):
+- cfzt-warp: MASQUE/WireGuard tunnel daemon (built from source)
+- cloudflared: Cloudflare Tunnel connector (official Cloudflare release,
+  version pinned in Makefile CLOUDFLARED_VERSION)
+
 WWW: https://www.cloudflare.com/zero-trust/

@@ -28,17 +28,32 @@ cf-masque-opnsense/
 └── docs/                   # This documentation
 ```
 
-## Building the Go Daemon
+## Building for Package Distribution
+
+The plugin ships as a self-contained OPNsense `.pkg` — no external downloads
+or toolchains are needed on the target box. The build pipeline is:
 
 ```sh
-cd go/cfzt-warp
-go build -o cfzt-warp .          # build for host (dev/test)
+# Step 1: produce the binaries (run in CI or on a dev machine with Go + curl)
+cd net/cloudflare-zt
+make build-daemon          # cross-compiles cfzt-warp, downloads pinned cloudflared
 
-# Cross-compile for FreeBSD amd64 (production target)
-GOOS=freebsd GOARCH=amd64 go build -o cfzt-warp .
+# Step 2: assemble the OPNsense package
+make package               # requires opnsense-tools / plugins.mk
 ```
 
-The Makefile in `net/cloudflare-zt/` cross-compiles and installs to `/usr/local/sbin/cfzt-warp` during `make install`.
+`build-daemon` places binaries at:
+- `net/cloudflare-zt/src/usr/local/sbin/cfzt-warp` (built from source)
+- `net/cloudflare-zt/src/usr/local/bin/cloudflared` (downloaded from Cloudflare releases)
+
+Both paths are in `.gitignore` — they are build artifacts, not committed to source.
+Update `CLOUDFLARED_VERSION` in the Makefile when upgrading cloudflared.
+
+```sh
+# Local dev build (host platform, for running tests)
+cd go/cfzt-warp
+go build -o cfzt-warp .
+```
 
 ## Running Tests
 

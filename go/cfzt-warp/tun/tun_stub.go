@@ -11,7 +11,7 @@ var errNotSupported = errors.New("native TUN only supported on FreeBSD")
 
 type FreeBSDTUN struct{}
 
-func New(_, _ string, _ int) (*FreeBSDTUN, error)                { return nil, errNotSupported }
+func New(_, _, _ string, _ int) (*FreeBSDTUN, error)             { return nil, errNotSupported }
 func (t *FreeBSDTUN) Name() string                               { return "" }
 func (t *FreeBSDTUN) MTU() int                                   { return 0 }
 func (t *FreeBSDTUN) Read(_ []byte) (int, error)                 { return 0, errNotSupported }

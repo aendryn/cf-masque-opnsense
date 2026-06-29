@@ -120,6 +120,19 @@ def _write_cloudflared_config(conn_uuid: str, conn: dict) -> str:
     return path
 
 
+def _cleanup_stale_iface(conn_uuid: str) -> None:
+    """Destroy any leftover cfzt interface from a crashed previous run."""
+    state_file = f'/var/run/cfzt-iface-{conn_uuid}'
+    try:
+        with open(state_file) as f:
+            iface = f.read().strip()
+        if iface:
+            subprocess.run(['ifconfig', iface, 'destroy'], capture_output=True)
+        os.unlink(state_file)
+    except FileNotFoundError:
+        pass
+
+
 def start_connection(conn_uuid: str, conn: dict) -> dict:
     proto = conn['protocol']
     pid_file = _pid_file(conn_uuid, proto)
@@ -127,6 +140,9 @@ def start_connection(conn_uuid: str, conn: dict) -> dict:
 
     if _is_running(pid):
         return {'result': 'already_running', 'pid': pid}
+
+    # Destroy any orphaned interface from a previous crashed run before starting fresh.
+    _cleanup_stale_iface(conn_uuid)
 
     if conn.get('registration_status') not in ('enrolled', 'registered') and proto != 'cloudflared':
         return {'result': 'failed', 'message': 'Device not registered. Run register first.'}

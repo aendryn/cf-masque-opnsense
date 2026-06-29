@@ -24,7 +24,7 @@ type FreeBSDTUN struct {
 // FreeBSD TUN devices are pre-allocated at /dev/tun0, /dev/tun1, etc.
 // The water library opens the first available /dev/tunN device.
 // We then configure it with ifconfig.
-func New(clientIPv4, clientIPv6 string, mtu int) (*FreeBSDTUN, error) {
+func New(clientIPv4, clientIPv6, ifName string, mtu int) (*FreeBSDTUN, error) {
 	cfg := water.Config{DeviceType: water.TUN}
 	iface, err := water.New(cfg)
 	if err != nil {
@@ -32,6 +32,14 @@ func New(clientIPv4, clientIPv6 string, mtu int) (*FreeBSDTUN, error) {
 	}
 
 	name := iface.Name()
+
+	// Rename to cfzt prefix so OPNsense volatile device tracking (`^cfzt`) covers it.
+	// The fd stays valid after rename; all subsequent ifconfig calls use the new name.
+	if err := exec.Command("ifconfig", name, "name", ifName).Run(); err != nil {
+		_ = iface.Close()
+		return nil, fmt.Errorf("rename %s to %s: %w", name, ifName, err)
+	}
+	name = ifName
 
 	// Set MTU
 	if err := exec.Command("ifconfig", name, "mtu", fmt.Sprintf("%d", mtu)).Run(); err != nil {

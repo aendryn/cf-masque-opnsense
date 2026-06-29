@@ -99,7 +99,7 @@ func runMASQUE(ctx context.Context, cfg *models.DaemonConfig) {
 		log.Fatal("MASQUE private key and certificate are required (run register/enroll first)")
 	}
 
-	tunDev, err := tun.New(cfg.ClientIPv4, cfg.ClientIPv6, cfg.MTU)
+	tunDev, err := tun.New(cfg.ClientIPv4, cfg.ClientIPv6, "cfzt"+shortUUID(cfg.ConnectionUUID), cfg.MTU)
 	if err != nil {
 		log.Fatalf("Create TUN: %v", err)
 	}
@@ -235,7 +235,7 @@ func shortUUID(uuid string) string {
 		// Convert last 4 hex chars to decimal 0-65535
 		n, err := strconv.ParseUint(clean[len(clean)-4:], 16, 16)
 		if err == nil {
-			return strconv.FormatUint(n%100, 10)
+			return strconv.FormatUint(n, 10)
 		}
 	}
 	return "0"

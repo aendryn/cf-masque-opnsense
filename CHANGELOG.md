@@ -64,6 +64,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - datetime.utcnow() replaced with datetime.now(timezone.utc) throughout (Python 3.14 deprecation)
 - ElementTree truth-value DeprecationWarning fixed in cfzt_config.py
 - cfzt-warp TLSConfig now returns error on empty certificate (was silently accepting)
+- MASQUE TUN interfaces renamed to cfzt<N> on creation so OPNsense volatile device tracking covers them (was tun0/tun1, invisible to GUI)
+- Stale cfzt interface from crashed daemon destroyed before each connection start (prevents orphaned interfaces with live routes)
+- shortUUID collision range widened from 0–99 to 0–65535
+
+### Security
+- Removed InsecureSkipVerify:true from MASQUE TLS — server cert now verified against system CAs via ServerName; previously any MITM on the WAN could impersonate the Cloudflare endpoint when no pubkey pin was set
+- config.xml read-modify-write in warp.py now holds fcntl.LOCK_EX to prevent races with concurrent GUI saves
+- UUID format validated inside warp.py before XPath use (defence-in-depth; strict 8-4-4-4-12 pattern)
+- Newlines stripped from Unbound forward-addr and domain-insecure values to prevent directive injection via custom_servers/search_domains fields
 
 #### GUI
 - 8 Volt views: connections, organizations, splittunnel, wizard, diagnostics, logs, dashboard, status

@@ -21,8 +21,8 @@ LOG_DIR = '/var/log'
 
 # Cloudflare WARP endpoints for connectivity checks
 PROBE_TARGETS = [
-    ('162.159.198.1', 2408, 'udp', 'WARP IPv4 QUIC endpoint'),
-    ('162.159.198.2', 443, 'tcp', 'WARP IPv4 HTTP/2 endpoint'),
+    ('162.159.198.1', 443, 'udp', 'MASQUE QUIC primary (UDP 443)'),
+    ('162.159.198.2', 443, 'tcp', 'MASQUE HTTP/2 fallback (TCP 443)'),
     ('1.1.1.1', 443, 'tcp', 'Cloudflare DNS'),
     ('cloudflareaccess.com', 443, 'tcp', 'Cloudflare Access'),
 ]

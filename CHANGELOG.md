@@ -41,6 +41,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Atomic config write with unbound-control reload
 - configd actions: applydns, removedns
 
+#### Health Monitoring
+- cfzt_monitor.py daemon: polls connection status every 30s, auto-restarts failed connections
+- OPNsense notification integration (send.py) for connection up/down transitions
+- PID file management with clean SIGTERM handling
+- configd actions: startmonitor, stopmonitor, monitorstatus
+
+#### OPNsense Hooks
+- cloudflarezt_configure(): registers for bootup/newwanip/vpn events — restarts connections on WAN IP change or reboot
+- cloudflarezt_firmware_upgrade(): stops all connections cleanly before OPNsense upgrades
+- cloudflarezt_xmlrpc_sync(): HA config sync support
+- cloudflarezt_syslog(): registers cfzt-warp and cfzt-monitor log facilities
+
+#### Device Management API
+- cfzt_api.py: service token enrollment (auth_client_id/auth_client_secret) for headless/MDM deployment
+- install_id set to UUID per WARP API requirement; os_version reports FreeBSD
+- Additional management endpoints: delete_tunnel, rotate_tunnel_secret, list_tunnel_connections, list_registrations, delete_registration, list_physical_devices, revoke_device
+
+### Fixed
+- MASQUE endpoint port corrected to UDP 443 (was incorrectly 2408, which is WireGuard's port)
+- Zero Trust SNI updated to zt-masque.cloudflareclient.com (was consumer SNI)
+- datetime.utcnow() replaced with datetime.now(timezone.utc) throughout (Python 3.14 deprecation)
+- ElementTree truth-value DeprecationWarning fixed in cfzt_config.py
+- cfzt-warp TLSConfig now returns error on empty certificate (was silently accepting)
+
 #### GUI
 - 8 Volt views: connections, organizations, splittunnel, wizard, diagnostics, logs, dashboard, status
 - Status view with per-connection live status table, start/stop buttons, auto-refresh

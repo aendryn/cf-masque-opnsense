@@ -115,3 +115,46 @@ function cloudflarezt_cron()
 
     return $jobs;
 }
+
+function cloudflarezt_configure()
+{
+    return [
+        'bootup'   => ['cloudflarezt_configure_do:2'],
+        'newwanip' => ['cloudflarezt_configure_do:2'],
+        'vpn'      => ['cloudflarezt_configure_do:2'],
+    ];
+}
+
+function cloudflarezt_configure_do($verbose = false)
+{
+    if (!cloudflarezt_enabled()) {
+        return;
+    }
+    $backend = new \OPNsense\Core\Backend();
+    // Restart all connections — the daemon handles rebinding to the new WAN IP
+    $backend->configdRun('cloudflarezt restart');
+}
+
+function cloudflarezt_firmware_upgrade()
+{
+    // Stop service cleanly before firmware upgrade to avoid tunnel state corruption
+    $backend = new \OPNsense\Core\Backend();
+    $backend->configdRun('cloudflarezt stop');
+}
+
+function cloudflarezt_xmlrpc_sync()
+{
+    return [[
+        'description' => gettext('Cloudflare Zero Trust'),
+        'section'     => 'OPNsense.CloudflareZT',
+        'id'          => 'cloudflarezt',
+        'services'    => 'cloudflarezt',
+    ]];
+}
+
+function cloudflarezt_syslog()
+{
+    return [
+        'cloudflarezt' => ['facility' => ['cfzt-warp', 'cloudflared', 'cfzt-monitor']],
+    ];
+}

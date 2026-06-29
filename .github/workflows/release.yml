@@ -48,12 +48,15 @@ jobs:
           git clone --quiet --depth 1 --branch "${VER}" \
             https://github.com/cloudflare/cloudflared /tmp/cloudflared-src
           # Add missing FreeBSD platform stubs (cloudflared only targets darwin/linux)
-          sed 's|darwin || linux|freebsd|' \
-            /tmp/cloudflared-src/diagnostic/network/collector_unix.go \
-            > /tmp/cloudflared-src/diagnostic/network/collector_freebsd.go
-          sed 's|^//go:build linux$|//go:build freebsd|' \
-            /tmp/cloudflared-src/diagnostic/system_collector_linux.go \
-            > /tmp/cloudflared-src/diagnostic/system_collector_freebsd.go
+          python3 -c "
+import sys
+for src, dst, old, new in [
+  ('diagnostic/network/collector_unix.go',       'diagnostic/network/collector_freebsd.go',       'darwin || linux', 'freebsd'),
+  ('diagnostic/system_collector_linux.go',       'diagnostic/system_collector_freebsd.go',         '//go:build linux', '//go:build freebsd'),
+]:
+    with open(src) as f: content = f.read()
+    with open(dst, 'w') as f: f.write(content.replace(old, new, 1))
+" 2>&1
           cd /tmp/cloudflared-src
           GOOS=freebsd GOARCH=amd64 CGO_ENABLED=0 go build \
             -ldflags="-s -w" \

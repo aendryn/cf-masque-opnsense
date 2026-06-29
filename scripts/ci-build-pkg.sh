@@ -14,12 +14,12 @@ mkdir -p "$DIST" "$REPO/All"
 # ── os-cloudflare-zt ─────────────────────────────────────────────────────
 build_main() {
     stage=$(mktemp -d)
-    scripts=$(mktemp -d)
+    meta=$(mktemp -d)   # metadata dir: +MANIFEST + deinstall scripts
     plist=$(mktemp)
 
     # Map src/ to install paths:
-    #   src/usr/... → /usr/...   (binaries land at /usr/local/sbin, /usr/local/bin)
-    #   src/...     → /usr/local/...   (everything else follows OPNsense prefix)
+    #   src/usr/... → /usr/...
+    #   src/...     → /usr/local/...  (OPNsense prefix convention)
     find net/cloudflare-zt/src -type f ! -name '.gitkeep' | while read -r src; do
         rel="${src#net/cloudflare-zt/src/}"
         case "$rel" in
@@ -35,23 +35,8 @@ build_main() {
     find "$stage" -type f | sed "s|$stage/||" | sort > "$plist"
     flatsize=$(find "$stage" -type f | xargs stat -f '%z' | awk '{sum+=$1} END{print sum+0}')
 
-    cat > "$scripts/pre-deinstall" <<'SH'
-#!/bin/sh
-/usr/local/sbin/configctl cloudflarezt stop 2>/dev/null || true
-/usr/local/sbin/configctl cloudflarezt stopmonitor 2>/dev/null || true
-/usr/local/sbin/configctl cloudflarezt removedns 2>/dev/null || true
-for iface in $(ifconfig -l | tr ' ' '\n' | grep '^cfzt'); do
-    ifconfig "$iface" destroy 2>/dev/null || true
-done
-rm -f /var/run/cfzt-*.pid /var/run/cfzt-monitor.pid /var/run/cfzt-iface-*
-SH
-
-    cat > "$scripts/post-deinstall" <<'SH'
-#!/bin/sh
-/usr/sbin/unbound-control reload 2>/dev/null || true
-SH
-
-    cat > "$stage/+MANIFEST" <<EOF
+    # Manifest goes in the metadata dir (used with -m, not -M)
+    cat > "$meta/+MANIFEST" <<EOF
 name: "os-cloudflare-zt"
 version: "${VERSION}"
 origin: "net/os-cloudflare-zt"
@@ -67,14 +52,32 @@ deps: {
 }
 EOF
 
-    pkg create -M "$stage/+MANIFEST" -r "$stage" -p "$plist" -s "$scripts" -o "$DIST/"
-    rm -rf "$stage" "$scripts" "$plist"
+    # Deinstall scripts alongside the manifest in the metadata dir
+    cat > "$meta/+PRE_DEINSTALL" <<'SH'
+#!/bin/sh
+/usr/local/sbin/configctl cloudflarezt stop 2>/dev/null || true
+/usr/local/sbin/configctl cloudflarezt stopmonitor 2>/dev/null || true
+/usr/local/sbin/configctl cloudflarezt removedns 2>/dev/null || true
+for iface in $(ifconfig -l | tr ' ' '\n' | grep '^cfzt'); do
+    ifconfig "$iface" destroy 2>/dev/null || true
+done
+rm -f /var/run/cfzt-*.pid /var/run/cfzt-monitor.pid /var/run/cfzt-iface-*
+SH
+
+    cat > "$meta/+POST_DEINSTALL" <<'SH'
+#!/bin/sh
+/usr/sbin/unbound-control reload 2>/dev/null || true
+SH
+
+    pkg create -m "$meta" -r "$stage" -p "$plist" -o "$DIST/"
+    rm -rf "$stage" "$meta" "$plist"
     echo "==> Built: $DIST/os-cloudflare-zt-${VERSION}.pkg"
 }
 
 # ── os-repo-aendryn (bootstrap) ──────────────────────────────────────────
 build_bootstrap() {
     stage=$(mktemp -d)
+    meta=$(mktemp -d)
     plist=$(mktemp)
 
     mkdir -p "$stage/usr/local/etc/pkg/repos" "$stage/usr/local/share/aendryn"
@@ -86,7 +89,7 @@ build_bootstrap() {
     find "$stage" -type f | sed "s|$stage/||" | sort > "$plist"
     flatsize=$(find "$stage" -type f | xargs stat -f '%z' | awk '{sum+=$1} END{print sum+0}')
 
-    cat > "$stage/+MANIFEST" <<EOF
+    cat > "$meta/+MANIFEST" <<EOF
 name: "os-repo-aendryn"
 version: "1.0.0"
 origin: "net/os-repo-aendryn"
@@ -98,8 +101,8 @@ prefix: "/"
 flatsize: ${flatsize}
 EOF
 
-    pkg create -M "$stage/+MANIFEST" -r "$stage" -p "$plist" -o "$DIST/"
-    rm -rf "$stage" "$plist"
+    pkg create -m "$meta" -r "$stage" -p "$plist" -o "$DIST/"
+    rm -rf "$stage" "$meta" "$plist"
     echo "==> Built: $DIST/os-repo-aendryn-1.0.0.pkg"
 }
 

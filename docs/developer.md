@@ -50,7 +50,15 @@ go test ./...
 # Python tests (requires cryptography package)
 pip install pytest cryptography
 pytest tests/
+
+# PHP unit tests (requires PHP + Composer)
+composer install
+phpunit
 ```
+
+The PHP tests stub all OPNsense/Phalcon framework classes and run without a
+full OPNsense install. They cover: UUID validation (injection prevention),
+POST-only guards, and api_token interception in OrganizationController.
 
 ## Key Dependencies
 

@@ -1,5 +1,9 @@
 # cf-masque-opnsense
 
+> **Experimental.** This project is provided as-is with no guarantees of stability, correctness, or fitness for any purpose. Use in production environments is at your own risk. The developer accepts no liability for data loss, network outages, or security issues arising from its use.
+>
+> This project is not affiliated with, endorsed by, or supported by Cloudflare, Inc. Cloudflare, WARP, and Cloudflare Tunnel are trademarks of Cloudflare, Inc.
+
 Cloudflare Zero Trust VPN plugin for OPNsense. Connects your router to Cloudflare's network using WARP (MASQUE/QUIC or WireGuard) or Cloudflare Tunnel, with full OPNsense GUI integration.
 
 ## Features
@@ -126,4 +130,3 @@ Releases are built automatically by GitHub Actions on version tags. The workflow
 ## License
 
 BSD 2-Clause. See individual files for copyright headers.
-Cloudflare, WARP, and Cloudflare Tunnel are trademarks of Cloudflare, Inc. This project is not affiliated with or endorsed by Cloudflare.

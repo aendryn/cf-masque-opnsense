@@ -211,12 +211,14 @@
 
         <!-- DNS overrides -->
         <dns>
-            <override_dns type="BooleanField">
-                <Default>0</Default>
-            </override_dns>
-            <gateway_dns type="BooleanField">
-                <Default>0</Default>
-            </gateway_dns>
+            <dns_mode type="OptionField">
+                <Default>system</Default>
+                <OptionValues>
+                    <system>Use OPNsense DNS (no override)</system>
+                    <cloudflare_gateway>Cloudflare Gateway</cloudflare_gateway>
+                    <custom>Custom DNS servers</custom>
+                </OptionValues>
+            </dns_mode>
             <custom_servers type="TextField"/>
             <search_domains type="TextField"/>
         </dns>

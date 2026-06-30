@@ -56,6 +56,11 @@ class IndexController extends IndexController
         $this->view->ruleForm = $this->getForm('dialogSplitTunnelRule');
     }
 
+    public function dnsAction()
+    {
+        $this->view->pick('OPNsense/CloudflareZT/dns');
+    }
+
     public function wizardAction()
     {
         $this->view->pick('OPNsense/CloudflareZT/wizard');

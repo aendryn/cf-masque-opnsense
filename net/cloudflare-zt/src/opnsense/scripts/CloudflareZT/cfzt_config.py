@@ -113,8 +113,7 @@ def get_config() -> dict:
     dns_node = zt.find('dns')
     if dns_node is not None:
         cfg['dns'] = {
-            'override_dns': _parse_bool(text(dns_node, 'override_dns', '0')),
-            'gateway_dns': _parse_bool(text(dns_node, 'gateway_dns', '0')),
+            'dns_mode': text(dns_node, 'dns_mode', 'system'),
             'custom_servers': text(dns_node, 'custom_servers'),
             'search_domains': text(dns_node, 'search_domains'),
         }

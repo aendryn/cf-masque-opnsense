@@ -34,20 +34,30 @@ The plugin ships as a self-contained OPNsense `.pkg` — no external downloads
 or toolchains are needed on the target box. The build pipeline is:
 
 ```sh
-# Step 1: produce the binaries (run in CI or on a dev machine with Go + curl)
-cd net/cloudflare-zt
-make build-daemon          # cross-compiles cfzt-warp, downloads pinned cloudflared
+# Step 1: produce the binaries (CI handles this automatically on tag push)
+# cfzt-warp: cross-compile from go/cfzt-warp
+cd go/cfzt-warp
+GOOS=freebsd GOARCH=amd64 CGO_ENABLED=0 go build -o ../../net/cloudflare-zt/src/usr/local/sbin/cfzt-warp .
+
+# cloudflared: clone source, apply FreeBSD stubs, cross-compile
+git clone --depth 1 --branch $(awk '/^CLOUDFLARED_VERSION/{print $2}' net/cloudflare-zt/Makefile) \
+    https://github.com/cloudflare/cloudflared /tmp/cloudflared-src
+python3 scripts/cloudflared-freebsd-stubs.py /tmp/cloudflared-src
+cd /tmp/cloudflared-src
+GOOS=freebsd GOARCH=amd64 CGO_ENABLED=0 go build \
+    -o $OLDPWD/net/cloudflare-zt/src/usr/local/bin/cloudflared ./cmd/cloudflared/
 
 # Step 2: assemble the OPNsense package
 make package               # requires opnsense-tools / plugins.mk
 ```
 
-`build-daemon` places binaries at:
-- `net/cloudflare-zt/src/usr/local/sbin/cfzt-warp` (built from source)
-- `net/cloudflare-zt/src/usr/local/bin/cloudflared` (downloaded from Cloudflare releases)
+Both binaries land at:
+- `net/cloudflare-zt/src/usr/local/sbin/cfzt-warp` (built from `go/cfzt-warp`)
+- `net/cloudflare-zt/src/usr/local/bin/cloudflared` (built from cloudflared source; no pre-built FreeBSD binary exists)
 
 Both paths are in `.gitignore` — they are build artifacts, not committed to source.
-Update `CLOUDFLARED_VERSION` in the Makefile when upgrading cloudflared.
+Update `CLOUDFLARED_VERSION` in `net/cloudflare-zt/Makefile` to pin a different cloudflared release tag.
+`scripts/cloudflared-freebsd-stubs.py` applies two missing FreeBSD platform stubs to the cloudflared source tree before compilation.
 
 ```sh
 # Local dev build (host platform, for running tests)

@@ -23,7 +23,7 @@ Schema version is tracked in `CloudflareZT.xml`. When upgrading between minor ve
 
 Both `cfzt-warp` and `cloudflared` are shipped inside the package — no separate downloads required. They are replaced atomically during package upgrade. Running connections are restarted after the upgrade to load the new binaries.
 
-To upgrade `cloudflared` to a newer release, update `CLOUDFLARED_VERSION` in `net/cloudflare-zt/Makefile`, run `make build-daemon`, and rebuild the package.
+To upgrade `cloudflared` to a newer release, update `CLOUDFLARED_VERSION` in `net/cloudflare-zt/Makefile` to the new release tag. The CI pipeline clones cloudflared at that tag, applies the FreeBSD stubs via `scripts/cloudflared-freebsd-stubs.py`, and cross-compiles it. No pre-built FreeBSD binary exists upstream.
 
 ## Checking Current Version
 

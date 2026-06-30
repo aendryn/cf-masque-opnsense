@@ -186,6 +186,42 @@ Response:
 
 ---
 
+## DNS Controller
+
+### Get DNS settings
+`GET /api/cloudflarezt/dns/get`
+
+Response:
+```json
+{
+  "dns": {
+    "dns_mode": "system",
+    "custom_servers": "",
+    "search_domains": ""
+  }
+}
+```
+
+`dns_mode` values: `system` (OPNsense DNS, no override), `cloudflare_gateway` (forward to `162.159.36.1`), `custom` (forward to `custom_servers`).
+
+### Save DNS settings
+`POST /api/cloudflarezt/dns/set`
+
+Body:
+```json
+{
+  "dns": {
+    "dns_mode": "cloudflare_gateway",
+    "custom_servers": "",
+    "search_domains": "corp.example.com"
+  }
+}
+```
+
+Response: `{"result": "saved"}` — settings are written to config and Unbound is reloaded immediately.
+
+---
+
 ## Diagnostics Controller
 
 ### Run diagnostics

@@ -31,9 +31,11 @@ Secrets (device tokens, private keys, TLS certificates) are stored AES-256-GCM e
 
 **Split tunnel** (default): only traffic in the include list routes through Cloudflare. LAN traffic and non-ZT traffic use the normal default gateway.
 
-**Full tunnel**: all traffic routes through Cloudflare. The plugin adds host routes for Cloudflare endpoints via the normal gateway first, then sets the TUN as the default route. When the tunnel stops, the original default gateway is restored automatically — the router retains connectivity.
+**Full tunnel**: all traffic routes through Cloudflare. The plugin saves the current default gateway, installs it as a host route for the Cloudflare endpoint, then sets the TUN as the default route. When the tunnel stops, the original default gateway is restored automatically — the router retains connectivity.
 
-Configure at **VPN → Cloudflare Zero Trust → Split Tunnel**.
+If DNS mode is set to **OPNsense DNS**, the daemon also adds direct host routes for each of Unbound's upstream servers via the original gateway before entering the tunnel, so DNS queries never silently enter the tunnel and time out. These routes are removed when the tunnel exits.
+
+Configure at **VPN → Cloudflare ZT → Split Tunnel**.
 
 ## Key Rotation
 
@@ -50,7 +52,7 @@ The `cfzt-monitor` daemon polls connections every 30 seconds (configurable). On 
 1. Attempts to restart the connection via configd
 2. Sends an OPNsense system notification (if enabled)
 
-Configure at **VPN → Cloudflare Zero Trust → Monitoring**.
+Configure at **VPN → Cloudflare ZT → Monitoring**.
 
 ## WAN Failover
 
@@ -58,9 +60,17 @@ The plugin hooks into OPNsense's `newwanip` event. When the WAN IP changes (fail
 
 ## DNS Integration
 
-When **Override DNS** is enabled, the plugin writes an Unbound `forward-zone` config to `/var/unbound/conf.d/cloudflarezt.conf` and reloads Unbound. DNS queries are forwarded to:
-- **Gateway DNS**: Cloudflare Gateway at `162.159.36.1` (applies your Gateway policies)
-- **Custom servers**: any resolver you specify
+Configured at **VPN → Cloudflare ZT → DNS**. Three modes:
+
+| Mode | Behaviour |
+|------|-----------|
+| **OPNsense DNS** (default) | No override — Unbound resolves using its existing upstream configuration. No file is written to `/var/unbound/conf.d/`. |
+| **Cloudflare Gateway** | Writes a `forward-zone` to `/var/unbound/conf.d/cloudflarezt.conf` pointing to `162.159.36.1` / `2606:4700:4700::1111`. Applies your Zero Trust Gateway DNS policies. |
+| **Custom** | Writes a `forward-zone` pointing to the comma-separated servers you specify. |
+
+The **Search Domains** field (any mode) adds `domain-insecure` entries to Unbound for the listed domains — required when split-DNS internal zones need to resolve without DNSSEC validation.
+
+Changes take effect immediately; the plugin reloads Unbound via `unbound-control reload` without restarting the tunnel.
 
 ## HA / XMLRPC Sync
 

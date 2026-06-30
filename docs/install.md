@@ -12,17 +12,23 @@ No additional packages are required. The plugin ships as a self-contained packag
 
 ## Install the Plugin
 
+The plugin is distributed via a self-hosted FreeBSD pkg repository. Two steps:
+
 ```sh
+# Step 1 — add the repository (once per router)
+pkg add https://github.com/aendryn/cf-masque-opnsense/releases/latest/download/os-repo-aendryn-1.0.0.pkg
+
+# Step 2 — install the plugin
 pkg install os-cloudflare-zt
 ```
 
-Or via the OPNsense GUI: **System → Firmware → Plugins**, search for `os-cloudflare-zt`, click Install.
+Or via the OPNsense GUI: **System → Firmware → Plugins**, search for `os-cloudflare-zt`, click Install (the repository must be added first as above).
 
 ## First-Time Setup
 
 ### Option A: Setup Wizard (recommended)
 
-1. Navigate to **VPN → Cloudflare Zero Trust → Wizard**
+1. Navigate to **VPN → Cloudflare ZT → Setup Wizard**
 2. Enter your Cloudflare organization name and API token (needs "Zero Trust Write" scope)
 3. Choose a protocol (WARP MASQUE recommended)
 4. Click **Register Device** — the plugin enrolls a device with Cloudflare and stores keys securely
@@ -31,7 +37,7 @@ Or via the OPNsense GUI: **System → Firmware → Plugins**, search for `os-clo
 
 **Step 1 — Add organization**
 
-Go to **VPN → Cloudflare Zero Trust → Organizations**, click +.
+Go to **VPN → Cloudflare ZT → Organizations**, click +.
 
 - **Name**: any label (e.g. "Acme Corp")
 - **Team name**: your Cloudflare team name (from `<team>.cloudflareaccess.com`)
@@ -40,7 +46,7 @@ Go to **VPN → Cloudflare Zero Trust → Organizations**, click +.
 
 **Step 2 — Add connection**
 
-Go to **VPN → Cloudflare Zero Trust → Connections**, click +.
+Go to **VPN → Cloudflare ZT → Connections**, click +.
 
 - **Protocol**: WARP MASQUE (recommended), WARP WireGuard, or Cloudflare Tunnel
 - **Organization**: select the org from Step 1
@@ -55,7 +61,7 @@ Select the connection, click **Register**. The plugin:
 
 **Step 4 — Enable and start**
 
-Enable the plugin at **VPN → Cloudflare Zero Trust → General** and click Apply. The connection starts automatically.
+Enable the plugin at **VPN → Cloudflare ZT → Dashboard** and click Apply. The connection starts automatically.
 
 ## Zero Trust Enrollment (headless, no browser)
 
@@ -91,4 +97,4 @@ configctl cloudflarezt ping
 configctl cloudflarezt allstatus
 ```
 
-Or via the GUI: **VPN → Cloudflare Zero Trust → Status**.
+Or via the GUI: **VPN → Cloudflare ZT → Dashboard**.

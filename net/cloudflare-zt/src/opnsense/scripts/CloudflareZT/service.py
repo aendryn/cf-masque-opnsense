@@ -58,6 +58,8 @@ def _write_warp_config(conn_uuid: str, conn: dict) -> str:
     endpoint_pubkey = get_secret(f'endpoint_pubkey_{conn_uuid}')
     wg_priv = get_secret(f'wg_privkey_{conn_uuid}')
 
+    global_cfg = get_config()
+
     cfg = {
         'connection_uuid': conn_uuid,
         'protocol': conn['protocol'],
@@ -79,6 +81,7 @@ def _write_warp_config(conn_uuid: str, conn: dict) -> str:
         'always_reconnect': conn.get('always_reconnect', True),
         'http2_fallback': conn.get('http2_fallback', True),
         'tunnel_mode': conn.get('tunnel_mode', 'split'),
+        'dns_mode': global_cfg.get('dns', {}).get('dns_mode', 'system'),
         'bind_interface': conn.get('bind_interface', ''),
         'pid_file': _pid_file(conn_uuid, conn['protocol']),
         'log_ident': f'cfzt-warp[{conn.get("name", conn_uuid[:8])}]',

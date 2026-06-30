@@ -26,6 +26,7 @@ type DaemonConfig struct {
 	UseIPv6        bool   `json:"use_ipv6"`
 	PreferIPv6     bool   `json:"prefer_ipv6"`
 	TunnelMode     string `json:"tunnel_mode"` // split | full
+	DNSMode        string `json:"dns_mode"`    // system | cloudflare_gateway | custom
 	BindInterface  string `json:"bind_interface"`
 
 	// Reliability

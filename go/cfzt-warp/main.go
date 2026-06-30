@@ -131,6 +131,24 @@ func runMASQUE(ctx context.Context, cfg *models.DaemonConfig) {
 					_ = exec.Command("route", "add", "default", gw).Run()
 				}
 			}()
+
+			// In system DNS mode Unbound forwards to upstream servers configured in
+			// OPNsense. Those servers need direct (pre-tunnel) routes so DNS queries
+			// don't enter the tunnel and silently fail.
+			if cfg.DNSMode == "system" {
+				for _, srv := range opnsenseDNSServers() {
+					if err := exec.Command("route", "add", "-host", srv, gw).Run(); err != nil {
+						log.Printf("Warning: DNS host route %s via %s: %v", srv, gw, err)
+						continue
+					}
+					log.Printf("Added DNS host route: %s via %s", srv, gw)
+					srv := srv // capture loop var for defer
+					defer func() {
+						_ = exec.Command("route", "delete", "-host", srv).Run()
+						log.Printf("Removed DNS host route: %s", srv)
+					}()
+				}
+			}
 		}
 	}
 
@@ -235,6 +253,26 @@ func defaultGateway() string {
 		}
 	}
 	return ""
+}
+
+// opnsenseDNSServers returns the upstream DNS servers from OPNsense's config.xml.
+func opnsenseDNSServers() []string {
+	data, err := os.ReadFile("/conf/config.xml")
+	if err != nil {
+		return nil
+	}
+	var servers []string
+	const open, close = "<dnsserver>", "</dnsserver>"
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, open) && strings.HasSuffix(line, close) {
+			ip := strings.TrimSpace(line[len(open) : len(line)-len(close)])
+			if ip != "" {
+				servers = append(servers, ip)
+			}
+		}
+	}
+	return servers
 }
 
 // shortUUID returns a short numeric suffix derived from a UUID for interface naming.

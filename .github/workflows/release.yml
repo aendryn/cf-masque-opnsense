@@ -56,6 +56,15 @@ jobs:
             ./cmd/cloudflared/
           chmod 0755 "${GITHUB_WORKSPACE}/net/cloudflare-zt/src/usr/local/bin/cloudflared"
 
+      - name: Fetch existing packages from pkg repo
+        run: |
+          git clone --depth 1 --branch gh-pages \
+            https://github.com/aendryn/opnsense-repo.git /tmp/existing-repo
+          mkdir -p existing-pkgs
+          cp "/tmp/existing-repo/freebsd:14:amd64/latest/All/"*.pkg existing-pkgs/ 2>/dev/null || true
+          echo "Existing packages:"
+          ls existing-pkgs/ || echo "(none)"
+
       - name: Write signing key
         run: |
           printf '%s' "${{ secrets.PKG_SIGNING_KEY }}" > .ci-signing.key
@@ -66,7 +75,7 @@ jobs:
         with:
           usesh: true
           prepare: pkg install -y bash
-          run: bash scripts/ci-build-pkg.sh "${{ steps.ver.outputs.VERSION }}"
+          run: bash scripts/ci-build-pkg.sh "${{ steps.ver.outputs.VERSION }}" existing-pkgs
 
       - name: Remove signing key
         if: always()

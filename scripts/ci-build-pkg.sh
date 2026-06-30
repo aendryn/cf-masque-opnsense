@@ -1,10 +1,11 @@
 #!/bin/sh
 # Runs inside vmactions/freebsd-vm.
 # Builds os-cloudflare-zt.pkg, os-repo-aendryn.pkg, and a signed pkg repo.
-# Usage: ci-build-pkg.sh <version>
+# Usage: ci-build-pkg.sh <version> [existing-pkgs-dir]
 set -e
 
 VERSION="${1:-1.0.0}"
+EXISTING_PKGS="${2:-}"
 ARCH="freebsd:14:amd64"
 DIST="dist"
 REPO="$DIST/repo/$ARCH/latest"
@@ -111,7 +112,11 @@ EOF
 build_main
 build_bootstrap
 
-# Sign and publish the repo
+# Carry over existing packages so packagesite.yaml lists all plugins
+if [ -n "$EXISTING_PKGS" ] && [ -d "$EXISTING_PKGS" ]; then
+    cp "$EXISTING_PKGS"/*.pkg "$REPO/All/" 2>/dev/null || true
+fi
+
 cp "$DIST"/*.pkg "$REPO/All/"
 pkg repo "$REPO" "$(pwd)/.ci-signing.key"
 

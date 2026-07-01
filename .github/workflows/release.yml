@@ -73,6 +73,7 @@ jobs:
       - name: Build packages and repo (FreeBSD)
         uses: vmactions/freebsd-vm@v1
         with:
+          release: "14.2"
           usesh: true
           prepare: pkg install -y bash
           run: bash scripts/ci-build-pkg.sh "${{ steps.ver.outputs.VERSION }}" existing-pkgs

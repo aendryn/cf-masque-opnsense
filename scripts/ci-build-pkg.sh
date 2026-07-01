@@ -7,8 +7,9 @@ set -e
 VERSION="${1:-1.0.0}"
 EXISTING_PKGS="${2:-}"
 ARCH="FreeBSD:14:amd64"
+REPO_PATH="FreeBSD_14_amd64"
 DIST="dist"
-REPO="$DIST/repo/$ARCH/latest"
+REPO="$DIST/repo/$REPO_PATH/latest"
 
 mkdir -p "$DIST" "$REPO/All"
 
@@ -93,7 +94,7 @@ build_bootstrap() {
 
     cat > "$meta/+MANIFEST" <<EOF
 name: "os-repo-aendryn"
-version: "1.0.0"
+version: "1.0.1"
 origin: "net/os-repo-aendryn"
 comment: "aendryn OPNsense plugin repository configuration"
 desc: "Configures pkg to use the aendryn OPNsense plugin repository so that os-cloudflare-zt and future plugins appear in System -> Firmware -> Plugins."

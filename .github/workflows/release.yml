@@ -61,7 +61,7 @@ jobs:
           git clone --depth 1 --branch gh-pages \
             https://github.com/aendryn/opnsense-repo.git /tmp/existing-repo
           mkdir -p existing-pkgs
-          cp "/tmp/existing-repo/freebsd:14:amd64/latest/All/"*.pkg existing-pkgs/ 2>/dev/null || true
+          cp "/tmp/existing-repo/FreeBSD:14:amd64/latest/All/"*.pkg existing-pkgs/ 2>/dev/null || true
           echo "Existing packages:"
           ls existing-pkgs/ || echo "(none)"
 

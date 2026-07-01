@@ -6,7 +6,7 @@ set -e
 
 VERSION="${1:-1.0.0}"
 EXISTING_PKGS="${2:-}"
-ARCH="freebsd:14:amd64"
+ARCH="FreeBSD:14:amd64"
 DIST="dist"
 REPO="$DIST/repo/$ARCH/latest"
 

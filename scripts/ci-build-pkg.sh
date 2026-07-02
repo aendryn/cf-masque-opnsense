@@ -51,7 +51,6 @@ prefix: "/"
 flatsize: ${flatsize}
 deps: {
     wireguard-tools: {origin: "net/wireguard-tools"}
-    py311-cryptography: {origin: "security/py-cryptography"}
 }
 EOF
 

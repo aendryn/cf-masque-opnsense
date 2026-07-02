@@ -2,29 +2,26 @@
 Encrypted secrets store for Cloudflare Zero Trust plugin.
 
 Secrets (API tokens, private keys, device tokens) are stored in
-/usr/local/etc/cloudflarezt/secrets.json, encrypted with AES-256-GCM.
+/usr/local/etc/cloudflarezt/secrets.json, encrypted with AES-256-CBC + HMAC-SHA256.
 The encryption key is derived from the machine's host key via HKDF-SHA256.
 """
 
 import json
 import os
-import struct
+import subprocess
 import hashlib
 import hmac
 
 SECRETS_DIR = '/usr/local/etc/cloudflarezt'
 SECRETS_FILE = os.path.join(SECRETS_DIR, 'secrets.json')
-HOST_KEY_FILE = '/etc/rc.conf.d/opnsense_host_key'
 
-# Salt scoped to this plugin so key material doesn't cross to other plugins
 _HKDF_SALT = b'cloudflare-zt-plugin-v1'
-_HKDF_INFO = b'secrets-encryption-key'
-_KEY_LEN = 32  # AES-256
+_ENC_INFO  = b'secrets-enc-key'
+_AUTH_INFO = b'secrets-auth-key'
 
 
-def _derive_key() -> bytes:
-    """Derive a 256-bit encryption key from the machine host key via HKDF-SHA256."""
-    # Source material: /etc/hostid if available, else fallback to hostname+machine-id
+def _derive_keys() -> tuple:
+    """Derive AES-256 enc key and HMAC-SHA256 auth key from host identity via HKDF-SHA256."""
     ikm = b''
     for candidate in ['/etc/hostid', '/etc/machine-id', '/etc/rc.conf.d/opnsense_host_key']:
         try:
@@ -34,30 +31,41 @@ def _derive_key() -> bytes:
                     break
         except OSError:
             continue
-
     if not ikm:
         raise RuntimeError('Cannot find host identity material for key derivation')
-
-    # HKDF-Extract
     prk = hmac.new(_HKDF_SALT, ikm, hashlib.sha256).digest()
-    # HKDF-Expand (one block, T(1))
-    t1 = hmac.new(prk, _HKDF_INFO + b'\x01', hashlib.sha256).digest()
-    return t1[:_KEY_LEN]
+    enc_key  = hmac.new(prk, _ENC_INFO  + b'\x01', hashlib.sha256).digest()
+    auth_key = hmac.new(prk, _AUTH_INFO + b'\x01', hashlib.sha256).digest()
+    return enc_key, auth_key
 
 
-def _aes_gcm_encrypt(key: bytes, plaintext: bytes) -> bytes:
-    """Encrypt plaintext with AES-256-GCM. Returns nonce+ciphertext+tag."""
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-    nonce = os.urandom(12)
-    ct = AESGCM(key).encrypt(nonce, plaintext, None)
-    return nonce + ct
+def _encrypt(plaintext: bytes) -> bytes:
+    """AES-256-CBC + HMAC-SHA256 (encrypt-then-MAC). Returns iv+mac+ciphertext."""
+    enc_key, auth_key = _derive_keys()
+    iv = os.urandom(16)
+    proc = subprocess.run(
+        ['openssl', 'enc', '-aes-256-cbc',
+         '-K', enc_key.hex(), '-iv', iv.hex(), '-nosalt'],
+        input=plaintext, capture_output=True, check=True
+    )
+    ct = proc.stdout
+    mac = hmac.new(auth_key, iv + ct, hashlib.sha256).digest()
+    return iv + mac + ct
 
 
-def _aes_gcm_decrypt(key: bytes, blob: bytes) -> bytes:
-    """Decrypt AES-256-GCM blob (nonce+ciphertext+tag)."""
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-    nonce, ct = blob[:12], blob[12:]
-    return AESGCM(key).decrypt(nonce, ct, None)
+def _decrypt(blob: bytes) -> bytes:
+    """Verify HMAC then AES-256-CBC decrypt."""
+    enc_key, auth_key = _derive_keys()
+    iv, mac, ct = blob[:16], blob[16:48], blob[48:]
+    expected = hmac.new(auth_key, iv + ct, hashlib.sha256).digest()
+    if not hmac.compare_digest(mac, expected):
+        raise ValueError('MAC verification failed')
+    proc = subprocess.run(
+        ['openssl', 'enc', '-d', '-aes-256-cbc',
+         '-K', enc_key.hex(), '-iv', iv.hex(), '-nosalt'],
+        input=ct, capture_output=True, check=True
+    )
+    return proc.stdout
 
 
 def _load_raw() -> dict:
@@ -80,8 +88,7 @@ def _save_raw(data: dict) -> None:
 
 def set_secret(key: str, value: str) -> None:
     """Store a secret value encrypted under the given key."""
-    enc_key = _derive_key()
-    blob = _aes_gcm_encrypt(enc_key, value.encode('utf-8'))
+    blob = _encrypt(value.encode('utf-8'))
     data = _load_raw()
     data[key] = blob.hex()
     _save_raw(data)
@@ -93,9 +100,8 @@ def get_secret(key: str) -> str | None:
     if key not in data:
         return None
     try:
-        enc_key = _derive_key()
         blob = bytes.fromhex(data[key])
-        return _aes_gcm_decrypt(enc_key, blob).decode('utf-8')
+        return _decrypt(blob).decode('utf-8')
     except Exception:
         return None
 

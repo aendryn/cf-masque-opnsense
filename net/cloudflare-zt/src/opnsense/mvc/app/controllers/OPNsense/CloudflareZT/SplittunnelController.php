@@ -30,10 +30,11 @@ namespace OPNsense\CloudflareZT;
 
 use OPNsense\Base\IndexController;
 
-class IndexController extends IndexController
+class SplittunnelController extends IndexController
 {
     public function indexAction()
     {
-        $this->view->pick('OPNsense/CloudflareZT/dashboard');
+        $this->view->pick('OPNsense/CloudflareZT/splittunnel');
+        $this->view->ruleForm = $this->getForm('dialogSplitTunnelRule');
     }
 }

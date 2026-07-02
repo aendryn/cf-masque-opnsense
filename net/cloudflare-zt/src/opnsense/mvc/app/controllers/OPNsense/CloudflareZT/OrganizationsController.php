@@ -30,10 +30,11 @@ namespace OPNsense\CloudflareZT;
 
 use OPNsense\Base\IndexController;
 
-class IndexController extends IndexController
+class OrganizationsController extends IndexController
 {
     public function indexAction()
     {
-        $this->view->pick('OPNsense/CloudflareZT/dashboard');
+        $this->view->pick('OPNsense/CloudflareZT/organizations');
+        $this->view->organizationForm = $this->getForm('dialogOrganization');
     }
 }

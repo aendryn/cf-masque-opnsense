@@ -52,6 +52,14 @@ flatsize: ${flatsize}
 EOF
 
     # Deinstall scripts alongside the manifest in the metadata dir
+    cat > "$meta/+POST_INSTALL" <<'SH'
+#!/bin/sh
+# Restart configd so our action scripts are registered immediately
+/usr/local/etc/rc.d/configd restart > /dev/null 2>&1 || true
+# Flush menu/ACL/model caches so the VPN > Cloudflare ZT entry appears without re-login
+/usr/local/etc/rc.configure_plugins POST_INSTALL > /dev/null 2>&1 || true
+SH
+
     cat > "$meta/+PRE_DEINSTALL" <<'SH'
 #!/bin/sh
 /usr/local/sbin/configctl cloudflarezt stop 2>/dev/null || true
@@ -66,6 +74,8 @@ SH
     cat > "$meta/+POST_DEINSTALL" <<'SH'
 #!/bin/sh
 /usr/sbin/unbound-control reload 2>/dev/null || true
+# Flush caches so the menu entry disappears immediately on uninstall
+/usr/local/etc/rc.configure_plugins POST_DEINSTALL > /dev/null 2>&1 || true
 SH
 
     pkg create -m "$meta" -r "$stage" -p "$plist" -o "$DIST/"

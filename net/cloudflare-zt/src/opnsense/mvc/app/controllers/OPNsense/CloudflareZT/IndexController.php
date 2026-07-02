@@ -28,9 +28,9 @@
 
 namespace OPNsense\CloudflareZT;
 
-use OPNsense\Base\IndexController;
+use OPNsense\Base\IndexController as BaseIndexController;
 
-class IndexController extends IndexController
+class IndexController extends BaseIndexController
 {
     public function indexAction()
     {

@@ -51,9 +51,9 @@ class WizardController extends ApiControllerBase
         // Create or reuse organization
         $orgUUID = $post['org_uuid'] ?? null;
         if (empty($orgUUID)) {
-            // Create new organization
-            $orgUUID = \OPNsense\Base\UID::create();
+            // Create new organization — get UUID from the model after Add()
             $org = $model->organizations->organization->Add();
+            $orgUUID = $org->getAttributes()['uuid'];
             $org->enabled = '1';
             $org->name = $this->sanitize($post['org_name'] ?? '');
             $org->account_id = $this->sanitize($post['org_acctid'] ?? '');
@@ -69,9 +69,9 @@ class WizardController extends ApiControllerBase
             }
         }
 
-        // Create new connection
-        $connUUID = \OPNsense\Base\UID::create();
+        // Create new connection — get UUID from the model after Add()
         $conn = $model->connections->connection->Add();
+        $connUUID = $conn->getAttributes()['uuid'];
         $conn->enabled = '1';
         $conn->name = $this->sanitize($post['conn_name'] ?? 'warp-main');
         $conn->protocol = $this->sanitize($post['conn_protocol'] ?? 'warp_masque');

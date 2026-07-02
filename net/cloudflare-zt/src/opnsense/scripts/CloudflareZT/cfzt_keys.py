@@ -14,16 +14,20 @@ from typing import Tuple
 
 def generate_wireguard_keypair() -> Tuple[str, str]:
     """
-    Generate a WireGuard keypair using wg(8).
-    Returns (private_key_b64, public_key_b64).
+    Generate a WireGuard (X25519) keypair via openssl.
+    Returns (private_key_b64, public_key_b64) — raw 32-byte keys, base64-encoded.
     """
-    priv = subprocess.run(
-        ['wg', 'genkey'], capture_output=True, check=True
-    ).stdout.strip().decode()
-    pub = subprocess.run(
-        ['wg', 'pubkey'], input=priv.encode(), capture_output=True, check=True
-    ).stdout.strip().decode()
-    return priv, pub
+    # PKCS#8 DER for X25519 is exactly 48 bytes; raw private key = last 32 bytes
+    pkcs8 = subprocess.run(
+        ['openssl', 'genpkey', '-algorithm', 'X25519', '-outform', 'DER'],
+        capture_output=True, check=True
+    ).stdout
+    # SubjectPublicKeyInfo DER is exactly 44 bytes; raw public key = last 32 bytes
+    spki = subprocess.run(
+        ['openssl', 'pkey', '-inform', 'DER', '-pubout', '-outform', 'DER'],
+        input=pkcs8, capture_output=True, check=True
+    ).stdout
+    return base64.b64encode(pkcs8[-32:]).decode(), base64.b64encode(spki[-32:]).decode()
 
 
 def generate_masque_keypair() -> Tuple[str, str, str]:

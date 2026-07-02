@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version-file: go/cfzt-warp/go.mod
           cache-dependency-path: go/cfzt-warp/go.sum
 
       - name: Resolve version

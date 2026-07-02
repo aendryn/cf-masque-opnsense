@@ -49,9 +49,6 @@ www: "https://github.com/aendryn/cf-masque-opnsense"
 maintainer: "aendryn@github"
 prefix: "/"
 flatsize: ${flatsize}
-deps: {
-    wireguard-tools: {origin: "net/wireguard-tools"}
-}
 EOF
 
     # Deinstall scripts alongside the manifest in the metadata dir

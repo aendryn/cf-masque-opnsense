@@ -175,42 +175,35 @@ func runWireGuard(ctx context.Context, cfg *models.DaemonConfig) {
 		log.Fatal("WireGuard private key is required")
 	}
 
-	// WireGuard mode: create wg interface and configure peer
 	ifname := "cfzt" + shortUUID(cfg.ConnectionUUID)
 
+	// FreeBSD 14+ ifconfig has native WireGuard support (wgkey, wgpeer, wgendpoint, wgaip)
+	// — no wireguard-tools package needed.
 	cmds := [][]string{
 		{"ifconfig", "wg", "create", "name", ifname},
-		{"wg", "set", ifname,
-			"private-key", "/dev/stdin",
-			"peer", cfg.WgPeerPubkey,
-			"endpoint", fmt.Sprintf("%s:%d", cfg.EndpointV4, cfg.WgPeerPort),
-			"allowed-ips", "0.0.0.0/0,::/0",
-		},
+		{"ifconfig", ifname, "wgkey", cfg.WgPrivateKey},
+		{"ifconfig", ifname,
+			"wgpeer", cfg.WgPeerPubkey,
+			"wgendpoint", cfg.EndpointV4, strconv.Itoa(cfg.WgPeerPort),
+			"wgaip", "0.0.0.0/0",
+			"wgaip", "::/0"},
 		{"ifconfig", ifname, "inet", cfg.ClientIPv4, cfg.ClientIPv4},
 		{"ifconfig", ifname, "mtu", strconv.Itoa(cfg.MTU)},
 		{"ifconfig", ifname, "up"},
 	}
 
 	for _, args := range cmds {
-		cmd := exec.CommandContext(ctx, args[0], args[1:]...)
-		if args[0] == "wg" {
-			cmd.Stdin = strings.NewReader(cfg.WgPrivateKey + "\n")
-		}
-		if out, err := cmd.CombinedOutput(); err != nil {
+		if out, err := exec.CommandContext(ctx, args[0], args[1:]...).CombinedOutput(); err != nil {
 			log.Fatalf("WireGuard setup %v: %v (%s)", args, err, out)
 		}
 	}
 
-	// Write interface state file
 	_ = os.WriteFile("/var/run/cfzt-iface-"+cfg.ConnectionUUID, []byte(ifname), 0644)
 	defer os.Remove("/var/run/cfzt-iface-" + cfg.ConnectionUUID)
 
 	log.Printf("WireGuard interface %s up (peer=%s)", ifname, cfg.WgPeerPubkey)
-
-	// Wait for context cancellation — WireGuard kernel module handles reconnection
 	<-ctx.Done()
 
-	// Teardown
 	_ = exec.Command("ifconfig", ifname, "destroy").Run()
 	log.Printf("WireGuard interface %s destroyed", ifname)
 }

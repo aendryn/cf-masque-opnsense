@@ -115,13 +115,12 @@ def cmd_register(conn_uuid: str, jwt: str = '') -> dict:
     set_secret(f'device_token_{conn_uuid}', device_token)
     if masque_priv_b64:
         set_secret(f'masque_privkey_{conn_uuid}', masque_priv_b64)
-        # Store the TLS certificate DER (needed by cfzt-warp daemon)
         try:
             priv_key = load_masque_private_key(masque_priv_b64)
             cert_der = generate_self_signed_cert(priv_key)
             set_secret(f'masque_cert_{conn_uuid}', base64.b64encode(cert_der).decode())
-        except Exception:
-            pass
+        except Exception as e:
+            return {'result': 'failed', 'message': f'TLS cert generation failed: {e}'}
     if peer_pubkey:
         set_secret(f'endpoint_pubkey_{conn_uuid}', peer_pubkey)
     set_secret(f'wg_privkey_{conn_uuid}', wg_priv)
@@ -191,8 +190,8 @@ def cmd_enroll(conn_uuid: str) -> dict:
         priv_key = load_masque_private_key(masque_priv_b64)
         cert_der = generate_self_signed_cert(priv_key)
         set_secret(f'masque_cert_{conn_uuid}', base64.b64encode(cert_der).decode())
-    except Exception:
-        pass
+    except Exception as e:
+        return {'result': 'failed', 'message': f'TLS cert generation failed: {e}'}
 
     # Update endpoint pubkey in case it changed
     peers = updated.get('config', {}).get('peers', [])

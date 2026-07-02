@@ -80,14 +80,20 @@ def generate_self_signed_cert(priv_key_b64: str) -> bytes:
     Generate a self-signed DER certificate for the MASQUE TLS client certificate.
     Cloudflare uses this during the TLS handshake to authenticate the device.
     """
-    with tempfile.NamedTemporaryFile(delete=False) as f:
+    der = base64.b64decode(priv_key_b64)
+    # Convert PKCS#8 DER → PEM so openssl req works on both OpenSSL and LibreSSL
+    pem = subprocess.run(
+        ['openssl', 'pkey', '-inform', 'DER', '-outform', 'PEM'],
+        input=der, capture_output=True, check=True
+    ).stdout
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pem') as f:
         keyfile = f.name
-        f.write(base64.b64decode(priv_key_b64))
+        f.write(pem)
     os.chmod(keyfile, 0o600)
     try:
         return subprocess.run(
             ['openssl', 'req', '-x509',
-             '-key', keyfile, '-keyform', 'DER',
+             '-key', keyfile,
              '-subj', '/CN=cfzt-client',
              '-days', '3650',
              '-outform', 'DER'],

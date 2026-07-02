@@ -211,6 +211,9 @@ func (cfg *MaintainConfig) selectEndpoint() (net.Addr, error) {
 	if cfg.UseIPv6 && cfg.EndpointV6 != "" {
 		epStr = cfg.EndpointV6
 	}
+	if epStr == "" {
+		epStr = internal.WARPMasqueEndpointV4
+	}
 	ip := net.ParseIP(epStr)
 	if ip == nil {
 		return nil, fmt.Errorf("invalid QUIC endpoint IP %q", epStr)
